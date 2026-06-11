@@ -1,9 +1,18 @@
+import { useState, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { Home, PlusCircle, Search, LogOut, Users } from 'lucide-react';
 import './Layout.css';
 
 function Layout() {
   const navigate = useNavigate();
+  const [userRole, setUserRole] = useState('');
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      setUserRole(JSON.parse(storedUser).role);
+    }
+  }, []);
 
   const handleLogout = () => {
     // Basic logout logic for now
@@ -31,10 +40,12 @@ function Layout() {
           <Home size={24} />
           <span>Home</span>
         </NavLink>
-        <NavLink to="/users" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
-          <Users size={24} />
-          <span>User</span>
-        </NavLink>
+        {userRole === 'admin' && (
+          <NavLink to="/users" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
+            <Users size={24} />
+            <span>User</span>
+          </NavLink>
+        )}
         <NavLink to="/input" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
           <PlusCircle size={24} />
           <span>Input</span>
