@@ -1,19 +1,28 @@
 import { useState, useEffect } from 'react';
-import { Search, ChevronRight } from 'lucide-react';
+import { Search, ChevronRight, Loader2 } from 'lucide-react';
+import { api } from '../services/api';
 import './Inquery.css';
 
 function Inquery() {
   const [searchTerm, setSearchTerm] = useState('');
   const [transactions, setTransactions] = useState([]);
 
+  const [isLoading, setIsLoading] = useState(true);
+
   useEffect(() => {
-    // Mock fetch from google sheets
-    const mockData = [
-      { id: 'LHA-2023-001', item: 'Indomie Goreng', stage: 'Input SKR', updated: '2023-10-01' },
-      { id: 'LHA-2023-002', item: 'Bumbu Racik', stage: 'Harga dari Accounting', updated: '2023-10-02' },
-      { id: 'LHA-2023-003', item: 'Kecap Manis', stage: 'Approval Supplier', updated: '2023-10-05' },
-    ];
-    setTransactions(mockData);
+    const fetchTransactions = async () => {
+      try {
+        const data = await api.getTransactions();
+        // Since we are not doing date formatting yet, let's just use it
+        setTransactions(data);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchTransactions();
   }, []);
 
   const filtered = transactions.filter(t => 
@@ -39,25 +48,32 @@ function Inquery() {
       </div>
 
       <div className="transaction-list">
-        {filtered.map(t => (
-          <div key={t.id} className="transaction-card glass-panel">
-            <div className="t-card-header">
-              <h4>{t.id}</h4>
-              <span className="t-date">{t.updated}</span>
-            </div>
-            <div className="t-card-body">
-              <p className="t-item">{t.item}</p>
-              <div className="t-stage">
-                <span className="stage-badge">{t.stage}</span>
-              </div>
-            </div>
-            <button className="view-detail-btn">
-              <span>Detail</span>
-              <ChevronRight size={16} />
-            </button>
+        {isLoading ? (
+          <div className="empty-state">
+            <Loader2 className="spinning-icon" size={24} style={{ margin: '0 auto', marginBottom: '0.5rem', animation: 'spin 1s linear infinite' }} />
+            <p>Memuat data...</p>
+            <style>{`@keyframes spin { 100% { transform: rotate(360deg); } }`}</style>
           </div>
-        ))}
-        {filtered.length === 0 && (
+        ) : filtered.length > 0 ? (
+          filtered.map(t => (
+            <div key={t.id} className="transaction-card glass-panel">
+              <div className="t-card-header">
+                <h4>{t.id}</h4>
+                <span className="t-date">{t.updated ? new Date(t.updated).toLocaleDateString('id-ID') : '-'}</span>
+              </div>
+              <div className="t-card-body">
+                <p className="t-item">{t.item || 'N/A'}</p>
+                <div className="t-stage">
+                  <span className="stage-badge">{t.stage || 'Baru'}</span>
+                </div>
+              </div>
+              <button className="view-detail-btn">
+                <span>Detail</span>
+                <ChevronRight size={16} />
+              </button>
+            </div>
+          ))
+        ) : (
           <div className="empty-state">
             <p>Tidak ada transaksi ditemukan.</p>
           </div>

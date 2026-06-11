@@ -3,19 +3,35 @@ import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import './Login.css';
 
+import { api } from '../services/api';
+
 function Login() {
   const [nik, setNik] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    // Dummy login logic for now, later we integrate with google sheets API
+    setError('');
+    
     if (nik && password) {
-      localStorage.setItem('user', JSON.stringify({ nik, role: 'admin' })); // mock role
-      navigate('/dashboard');
+      setIsLoading(true);
+      try {
+        const result = await api.login(nik, password);
+        if (result.success) {
+          localStorage.setItem('user', JSON.stringify({ nik, role: result.role, name: result.name }));
+          navigate('/dashboard');
+        } else {
+          setError(result.message || 'NIK atau Password salah');
+        }
+      } catch (err) {
+        setError('Gagal terhubung ke server');
+      } finally {
+        setIsLoading(false);
+      }
     } else {
       setError('NIK dan Password harus diisi');
     }
@@ -62,8 +78,8 @@ function Login() {
             </div>
           </div>
 
-          <button type="submit" className="login-btn">
-            Sign In
+          <button type="submit" className="login-btn" disabled={isLoading}>
+            {isLoading ? 'Memeriksa...' : 'Sign In'}
           </button>
         </form>
       </div>

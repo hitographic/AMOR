@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Send, Clock } from 'lucide-react';
 import { checkTargetTime } from '../utils/timeCheck';
+import { api } from '../services/api';
 import './InputProgress.css';
 
 const STAGES = [
@@ -19,23 +20,41 @@ function InputProgress() {
   const [notes, setNotes] = useState('');
   const [notification, setNotification] = useState(null);
 
-  const handleSubmit = (e) => {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
+    setNotification(null);
     
-    // Check time target notification logic dummy
-    // In a real scenario, fetch the last progress date for this transaction first
-    const lastInputDate = new Date(); 
-    lastInputDate.setDate(lastInputDate.getDate() - 4); // simulate 4 days ago
-    
-    const timeWarning = checkTargetTime(stage, lastInputDate, new Date());
-    if (timeWarning) {
-      setNotification(timeWarning);
-    } else {
-      setNotification('Progress berhasil diinput.');
+    try {
+      const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+      const inputBy = storedUser.nik || 'Unknown';
+      
+      const result = await api.addProgress(transactionId, stage, notes, inputBy);
+      
+      if (result.success) {
+        // Check time target notification logic dummy
+        // In a real scenario, fetch the last progress date for this transaction first
+        const lastInputDate = new Date(); 
+        lastInputDate.setDate(lastInputDate.getDate() - 4); // simulate 4 days ago
+        
+        const timeWarning = checkTargetTime(stage, lastInputDate, new Date());
+        if (timeWarning) {
+          setNotification(timeWarning);
+        } else {
+          setNotification('Progress berhasil diinput.');
+        }
+        setTransactionId('');
+        setNotes('');
+      } else {
+        setNotification('Gagal menginput progress: ' + (result.error || 'Unknown error'));
+      }
+    } catch (err) {
+      setNotification('Terjadi kesalahan koneksi server.');
+    } finally {
+      setIsLoading(false);
     }
-    
-    // Simulate API call to Google sheets
-    console.log("Submitting:", { transactionId, stage, notes });
   };
 
   return (
@@ -84,9 +103,9 @@ function InputProgress() {
             />
           </div>
 
-          <button type="submit" className="submit-btn">
+          <button type="submit" className="submit-btn" disabled={isLoading}>
             <Send size={18} />
-            <span>Konfirmasi Progress</span>
+            <span>{isLoading ? 'Menyimpan...' : 'Konfirmasi Progress'}</span>
           </button>
         </form>
       </div>
