@@ -29,6 +29,8 @@ function InputProgress() {
 
   const [isLoading, setIsLoading] = useState(false);
   const [userRole, setUserRole] = useState('admin');
+  const [existingLHAs, setExistingLHAs] = useState([]);
+  const [isLoadingLHAs, setIsLoadingLHAs] = useState(true);
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
@@ -42,6 +44,20 @@ function InputProgress() {
         setStage(availableStages[0] || '');
       }
     }
+
+    const fetchLHAs = async () => {
+      try {
+        const data = await api.getTransactions();
+        if (Array.isArray(data)) {
+          setExistingLHAs(data.map(t => t.id));
+        }
+      } catch (error) {
+        console.error("Failed to load existing LHAs", error);
+      } finally {
+        setIsLoadingLHAs(false);
+      }
+    };
+    fetchLHAs();
   }, []);
 
   const handleSubmit = async (e) => {
@@ -97,13 +113,28 @@ function InputProgress() {
         <form onSubmit={handleSubmit} className="standard-form">
           <div className="form-group">
             <label>ID Transaksi / LHA Number</label>
-            <input 
-              type="text" 
-              value={transactionId}
-              onChange={(e) => setTransactionId(e.target.value)}
-              placeholder="e.g. LHA-2023-001"
-              required
-            />
+            {stage === 'Pembuatan LHA Reject' ? (
+              <input
+                type="text"
+                placeholder="e.g. LHA-2023-001"
+                value={transactionId}
+                onChange={(e) => setTransactionId(e.target.value)}
+                required
+              />
+            ) : (
+              <select
+                value={transactionId}
+                onChange={(e) => setTransactionId(e.target.value)}
+                required
+              >
+                <option value="" disabled>
+                  {isLoadingLHAs ? 'Memuat daftar LHA...' : 'Pilih Nomor LHA yang sudah ada'}
+                </option>
+                {existingLHAs.map((id) => (
+                  <option key={id} value={id}>{id}</option>
+                ))}
+              </select>
+            )}
           </div>
 
           <div className="form-group">
