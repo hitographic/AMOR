@@ -5,14 +5,21 @@ import { api } from '../services/api';
 import './InputProgress.css';
 
 const STAGES = [
-  "Pembuatan LHA Reject",
-  "LHA Reject to PPIC",
-  "Input SKR",
-  "Harga dari Accounting",
-  "Approval Supplier",
-  "Pembuatan PO",
-  "Muat Return"
+  'Pembuatan LHA Reject',
+  'LHA Reject to PPIC',
+  'Input SKR',
+  'Harga dari Accounting',
+  'Approval Supplier',
+  'Pembuatan PO',
+  'Muat Return'
 ];
+
+const ROLE_STAGES = {
+  admin: STAGES,
+  qc: ['Pembuatan LHA Reject', 'LHA Reject to PPIC'],
+  ppic: ['Input SKR', 'Harga dari Accounting', 'Approval Supplier', 'Pembuatan PO'],
+  wh: ['Muat Return']
+};
 
 function InputProgress() {
   const [transactionId, setTransactionId] = useState('');
@@ -21,6 +28,21 @@ function InputProgress() {
   const [notification, setNotification] = useState(null);
 
   const [isLoading, setIsLoading] = useState(false);
+  const [userRole, setUserRole] = useState('admin');
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      const parsed = JSON.parse(storedUser);
+      setUserRole(parsed.role || 'admin');
+      
+      // Auto-select first available stage based on role if default is not available
+      const availableStages = ROLE_STAGES[parsed.role] || STAGES;
+      if (!availableStages.includes(stage)) {
+        setStage(availableStages[0] || '');
+      }
+    }
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -86,8 +108,13 @@ function InputProgress() {
 
           <div className="form-group">
             <label>Pilih Tahapan Progres</label>
-            <select value={stage} onChange={(e) => setStage(e.target.value)}>
-              {STAGES.map((s) => (
+            <select 
+              value={stage} 
+              onChange={(e) => setStage(e.target.value)}
+              required
+            >
+              <option value="" disabled>Pilih tahapan...</option>
+              {(ROLE_STAGES[userRole] || STAGES).map(s => (
                 <option key={s} value={s}>{s}</option>
               ))}
             </select>
