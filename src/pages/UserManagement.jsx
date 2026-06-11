@@ -62,7 +62,10 @@ function UserManagement() {
   };
 
   // Pagination and filtering logic
-  const filteredUsers = users.filter(u => 
+  // Ensure users is an array to prevent crash if API returns an error object
+  const safeUsers = Array.isArray(users) ? users : [];
+  
+  const filteredUsers = safeUsers.filter(u => 
     (u.nik && u.nik.toString().toLowerCase().includes(searchTerm.toLowerCase())) || 
     (u.name && u.name.toLowerCase().includes(searchTerm.toLowerCase()))
   );
