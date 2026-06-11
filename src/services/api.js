@@ -67,6 +67,20 @@ export const api = {
     }
   },
 
+  getUsers: async () => {
+    if (!API_URL || API_URL === 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL') {
+      return []; // mock data if not connected
+    }
+
+    try {
+      const response = await fetch(`${API_URL}?action=getUsers`);
+      return await response.json();
+    } catch (error) {
+      console.error("Get Users Error", error);
+      throw error;
+    }
+  },
+
   addUser: async (nik, password, role, name) => {
     if (!API_URL || API_URL === 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL') {
       console.warn("API_URL is not set. Mocking user addition.");

@@ -1,0 +1,133 @@
+.user-management-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding-top: 1rem;
+}
+
+.tabs-container {
+  display: flex;
+  padding: 0.5rem;
+  border-radius: var(--radius-full);
+  gap: 0.5rem;
+}
+
+.tab-btn {
+  flex: 1;
+  background: transparent;
+  color: var(--color-text-muted);
+  padding: 0.75rem;
+  border-radius: var(--radius-full);
+  font-weight: 500;
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.tab-btn.active {
+  background: var(--color-surface);
+  color: var(--color-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.list-section, .add-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.add-section {
+  padding: 1.5rem;
+  border-radius: var(--radius-md);
+}
+
+.add-section h3 {
+  color: var(--color-primary);
+  margin-bottom: 1rem;
+  font-size: 1.25rem;
+}
+
+.table-responsive {
+  overflow-x: auto;
+  border-radius: var(--radius-md);
+  padding: 0;
+}
+
+.modern-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.modern-table th, .modern-table td {
+  padding: 1rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.modern-table th {
+  font-weight: 600;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  background-color: rgba(0,0,0,0.02);
+}
+
+.modern-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.role-badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.role-badge.admin { background: #ffe3e3; color: #e03131; }
+.role-badge.qc { background: #e7f5ff; color: #1971c2; }
+.role-badge.ppic { background: #f3f0ff; color: #6741d9; }
+.role-badge.wh { background: #fff3bf; color: #f08c00; }
+
+.pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: var(--color-surface);
+  border-radius: var(--radius-full);
+  box-shadow: var(--shadow-sm);
+  margin-top: 0.5rem;
+}
+
+.pagination button {
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-full);
+  color: var(--color-text-main);
+  transition: all 0.2s;
+}
+
+.pagination button:not(:disabled):hover {
+  background: var(--color-primary);
+  color: white;
+  border-color: var(--color-primary);
+}
+
+.pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination span {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+}

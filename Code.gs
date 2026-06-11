@@ -23,6 +23,8 @@ function doGet(e) {
     return handleLogin(e.parameter.nik, e.parameter.password);
   } else if (action == 'getTransactions') {
     return handleGetTransactions();
+  } else if (action == 'getUsers') {
+    return handleGetUsers();
   }
   
   return ContentService.createTextOutput(JSON.stringify({error: "Action not found"})).setMimeType(ContentService.MimeType.JSON);
@@ -114,4 +116,23 @@ function handleAddUser(data) {
   sheet.appendRow([data.nik, data.password, data.role, data.name]);
   
   return ContentService.createTextOutput(JSON.stringify({success: true})).setMimeType(ContentService.MimeType.JSON);
+}
+
+function handleGetUsers() {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Users");
+  var data = sheet.getDataRange().getValues();
+  
+  var users = [];
+  // Skip header row
+  for (var i = 1; i < data.length; i++) {
+    var row = data[i];
+    users.push({
+      nik: row[0],
+      // We purposefully DO NOT send the password (row[1]) back to the frontend for security!
+      role: row[2],
+      name: row[3]
+    });
+  }
+  
+  return ContentService.createTextOutput(JSON.stringify(users)).setMimeType(ContentService.MimeType.JSON);
 }

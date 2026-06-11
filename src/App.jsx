@@ -4,6 +4,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import InputProgress from './pages/InputProgress';
 import Inquery from './pages/Inquery';
+import UserManagement from './pages/UserManagement';
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="input" element={<InputProgress />} />
         <Route path="inquery" element={<Inquery />} />
+        <Route path="users" element={<UserManagement />} />
       </Route>
     </Routes>
   );

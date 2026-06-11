@@ -1,5 +1,5 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { Home, PlusCircle, Search, LogOut } from 'lucide-react';
+import { Home, PlusCircle, Search, LogOut, Users } from 'lucide-react';
 import './Layout.css';
 
 function Layout() {
@@ -30,6 +30,10 @@ function Layout() {
         <NavLink to="/dashboard" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
           <Home size={24} />
           <span>Home</span>
+        </NavLink>
+        <NavLink to="/users" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
+          <Users size={24} />
+          <span>User</span>
         </NavLink>
         <NavLink to="/input" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
           <PlusCircle size={24} />
