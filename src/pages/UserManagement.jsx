@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { UserPlus, Search, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { UserPlus, Search, ChevronLeft, ChevronRight, Loader2, Edit2, Trash2, X } from 'lucide-react';
 import { api } from '../services/api';
 import './UserManagement.css';
 
@@ -20,6 +20,11 @@ function UserManagement() {
   const [newName, setNewName] = useState('');
   const [addStatus, setAddStatus] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Edit user state
+  const [editingUser, setEditingUser] = useState(null); // stores user object being edited
+  const [editPassword, setEditPassword] = useState('');
+  const [editStatus, setEditStatus] = useState(null);
 
   useEffect(() => {
     fetchUsers();
@@ -56,6 +61,43 @@ function UserManagement() {
       }
     } catch (err) {
       setAddStatus({ type: 'error', msg: 'Kesalahan jaringan' });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteUser = async (nik, name) => {
+    if (window.confirm(`Yakin ingin menghapus user ${name} (${nik})?`)) {
+      setIsLoading(true);
+      try {
+        const res = await api.deleteUser(nik);
+        if (res.success) {
+          fetchUsers();
+        } else {
+          alert('Gagal menghapus user');
+          setIsLoading(false);
+        }
+      } catch (err) {
+        alert('Kesalahan jaringan saat menghapus');
+        setIsLoading(false);
+      }
+    }
+  };
+
+  const handleUpdateUser = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setEditStatus(null);
+    try {
+      const res = await api.updateUser(editingUser.nik, editPassword, editingUser.role, editingUser.name);
+      if (res.success) {
+        setEditingUser(null);
+        fetchUsers();
+      } else {
+        setEditStatus({ type: 'error', msg: 'Gagal mengupdate user' });
+      }
+    } catch (err) {
+      setEditStatus({ type: 'error', msg: 'Kesalahan jaringan' });
     } finally {
       setIsSubmitting(false);
     }
@@ -131,6 +173,7 @@ function UserManagement() {
                         <th>NIK</th>
                         <th>Nama Lengkap</th>
                         <th>Role</th>
+                        <th style={{textAlign: 'center'}}>Aksi</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -139,6 +182,28 @@ function UserManagement() {
                           <td><strong>{user.nik}</strong></td>
                           <td>{user.name}</td>
                           <td><span className={`role-badge ${user.role}`}>{user.role}</span></td>
+                          <td style={{textAlign: 'center'}}>
+                            <div className="action-buttons">
+                              <button 
+                                className="action-btn edit" 
+                                onClick={() => {
+                                  setEditingUser({...user});
+                                  setEditPassword('');
+                                  setEditStatus(null);
+                                }}
+                                title="Edit User"
+                              >
+                                <Edit2 size={16} />
+                              </button>
+                              <button 
+                                className="action-btn delete" 
+                                onClick={() => handleDeleteUser(user.nik, user.name)}
+                                title="Hapus User"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -208,6 +273,64 @@ function UserManagement() {
               {isSubmitting ? 'Menyimpan...' : 'Simpan User Baru'}
             </button>
           </form>
+        </div>
+      )}
+
+      {/* Modal Edit User */}
+      {editingUser && (
+        <div className="modal-overlay">
+          <div className="modal-content glass-panel">
+            <div className="modal-header">
+              <h3>Edit User</h3>
+              <button className="close-btn" onClick={() => setEditingUser(null)}><X size={20} /></button>
+            </div>
+            
+            {editStatus && (
+              <div className={`notification ${editStatus.type}`}>
+                {editStatus.msg}
+              </div>
+            )}
+
+            <form onSubmit={handleUpdateUser} className="standard-form">
+              <div className="form-group">
+                <label>NIK (Tidak bisa diubah)</label>
+                <input type="text" value={editingUser.nik} disabled className="disabled-input" />
+              </div>
+              <div className="form-group">
+                <label>Nama Lengkap</label>
+                <input 
+                  type="text" 
+                  value={editingUser.name} 
+                  onChange={e=>setEditingUser({...editingUser, name: e.target.value})} 
+                  required 
+                />
+              </div>
+              <div className="form-group">
+                <label>Password (Kosongi jika tidak diubah)</label>
+                <input 
+                  type="text" 
+                  value={editPassword} 
+                  onChange={e=>setEditPassword(e.target.value)} 
+                  placeholder="Ketik password baru..." 
+                />
+              </div>
+              <div className="form-group">
+                <label>Role</label>
+                <select 
+                  value={editingUser.role} 
+                  onChange={e=>setEditingUser({...editingUser, role: e.target.value})}
+                >
+                  <option value="admin">Admin</option>
+                  <option value="qc">QC RMFG</option>
+                  <option value="ppic">PPIC</option>
+                  <option value="wh">Warehouse</option>
+                </select>
+              </div>
+              <button type="submit" className="submit-btn" disabled={isSubmitting}>
+                {isSubmitting ? 'Menyimpan...' : 'Update Data'}
+              </button>
+            </form>
+          </div>
         </div>
       )}
     </div>

@@ -39,6 +39,10 @@ function doPost(e) {
       return handleAddProgress(data);
     } else if (action == 'addUser') {
       return handleAddUser(data);
+    } else if (action == 'updateUser') {
+      return handleUpdateUser(data);
+    } else if (action == 'deleteUser') {
+      return handleDeleteUser(data);
     }
     
     return ContentService.createTextOutput(JSON.stringify({error: "Action not found"})).setMimeType(ContentService.MimeType.JSON);
@@ -135,4 +139,41 @@ function handleGetUsers() {
   }
   
   return ContentService.createTextOutput(JSON.stringify(users)).setMimeType(ContentService.MimeType.JSON);
+}
+
+function handleUpdateUser(data) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Users");
+  var sheetData = sheet.getDataRange().getValues();
+  
+  for (var i = 1; i < sheetData.length; i++) {
+    if (sheetData[i][0] == data.nik) {
+      // Update Password if provided (column 2)
+      if (data.password && data.password.trim() !== '') {
+        sheet.getRange(i + 1, 2).setValue(data.password);
+      }
+      // Update Role (column 3)
+      if (data.role) {
+        sheet.getRange(i + 1, 3).setValue(data.role);
+      }
+      // Update Name (column 4)
+      if (data.name) {
+        sheet.getRange(i + 1, 4).setValue(data.name);
+      }
+      return ContentService.createTextOutput(JSON.stringify({success: true})).setMimeType(ContentService.MimeType.JSON);
+    }
+  }
+  return ContentService.createTextOutput(JSON.stringify({error: "User not found"})).setMimeType(ContentService.MimeType.JSON);
+}
+
+function handleDeleteUser(data) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Users");
+  var sheetData = sheet.getDataRange().getValues();
+  
+  for (var i = 1; i < sheetData.length; i++) {
+    if (sheetData[i][0] == data.nik) {
+      sheet.deleteRow(i + 1);
+      return ContentService.createTextOutput(JSON.stringify({success: true})).setMimeType(ContentService.MimeType.JSON);
+    }
+  }
+  return ContentService.createTextOutput(JSON.stringify({error: "User not found"})).setMimeType(ContentService.MimeType.JSON);
 }

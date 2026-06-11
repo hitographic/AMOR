@@ -106,5 +106,56 @@ export const api = {
       console.error("Add User Error", error);
       throw error;
     }
+  },
+
+  updateUser: async (nik, password, role, name) => {
+    if (!API_URL || API_URL === 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL') {
+      console.warn("API_URL is not set. Mocking user update.");
+      return { success: true };
+    }
+
+    try {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8',
+        },
+        body: JSON.stringify({
+          action: 'updateUser',
+          nik,
+          password,
+          role,
+          name
+        })
+      });
+      return await response.json();
+    } catch (error) {
+      console.error("Update User Error", error);
+      throw error;
+    }
+  },
+
+  deleteUser: async (nik) => {
+    if (!API_URL || API_URL === 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL') {
+      console.warn("API_URL is not set. Mocking user deletion.");
+      return { success: true };
+    }
+
+    try {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8',
+        },
+        body: JSON.stringify({
+          action: 'deleteUser',
+          nik
+        })
+      });
+      return await response.json();
+    } catch (error) {
+      console.error("Delete User Error", error);
+      throw error;
+    }
   }
 };
