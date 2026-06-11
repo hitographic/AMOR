@@ -26,8 +26,8 @@ function Login() {
       <div className="login-card glass-panel">
         <div className="login-header">
           <h2>Welcome to</h2>
-          <h1>Laskar App 2</h1>
-          <p>Sign in to your account</p>
+          <h1>AMOR</h1>
+          <p>Aplikasi Monitoring Retur</p>
         </div>
 
         {error && <div className="error-message">{error}</div>}

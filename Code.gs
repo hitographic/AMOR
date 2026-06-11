@@ -1,5 +1,5 @@
 /**
- * Laskar App 2 - Google Apps Script Backend
+ * AMOR - Aplikasi Monitoring Retur Backend
  * 
  * INSTRUCTIONS FOR USER:
  * 1. Go to your Google Sheet: https://docs.google.com/spreadsheets/d/1ln5gzZVo15tx-lmkZ5hDyGKeVbBQ6sVMqyWQKff0wFI/edit

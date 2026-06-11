@@ -15,7 +15,7 @@ function Layout() {
     <div className="layout-container">
       <header className="top-header glass-panel">
         <div className="header-content">
-          <h1 className="app-title">Laskar App 2</h1>
+          <h1 className="app-title">AMOR</h1>
           <button className="logout-btn" onClick={handleLogout}>
             <LogOut size={20} />
           </button>
