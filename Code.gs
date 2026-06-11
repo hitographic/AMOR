@@ -1,0 +1,105 @@
+/**
+ * Laskar App 2 - Google Apps Script Backend
+ * 
+ * INSTRUCTIONS FOR USER:
+ * 1. Go to your Google Sheet: https://docs.google.com/spreadsheets/d/1ln5gzZVo15tx-lmkZ5hDyGKeVbBQ6sVMqyWQKff0wFI/edit
+ * 2. Click Extensions > Apps Script
+ * 3. Delete existing code and paste all of this code into Code.gs
+ * 4. Create 3 sheets in your spreadsheet named EXACTLY: "Users", "Transactions", "Progress"
+ *    - In "Users" row 1: NIK | Password | Role | Name
+ *    - In "Transactions" row 1: ID | Item | Current_Stage | Updated_At
+ *    - In "Progress" row 1: Transaction_ID | Stage | Input_By | Date | Notes
+ * 5. Click Deploy > New deployment
+ * 6. Select type: "Web app"
+ * 7. Execute as: "Me", Who has access: "Anyone"
+ * 8. Click Deploy, Authorize access, and copy the Web App URL.
+ * 9. Paste the URL into `src/services/api.js` replacing 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL'
+ */
+
+function doGet(e) {
+  var action = e.parameter.action;
+  
+  if (action == 'login') {
+    return handleLogin(e.parameter.nik, e.parameter.password);
+  } else if (action == 'getTransactions') {
+    return handleGetTransactions();
+  }
+  
+  return ContentService.createTextOutput(JSON.stringify({error: "Action not found"})).setMimeType(ContentService.MimeType.JSON);
+}
+
+function doPost(e) {
+  try {
+    var data = JSON.parse(e.postData.contents);
+    var action = data.action;
+    
+    if (action == 'addProgress') {
+      return handleAddProgress(data);
+    }
+    
+    return ContentService.createTextOutput(JSON.stringify({error: "Action not found"})).setMimeType(ContentService.MimeType.JSON);
+  } catch(error) {
+    return ContentService.createTextOutput(JSON.stringify({error: error.toString()})).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function handleLogin(nik, password) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Users");
+  var data = sheet.getDataRange().getValues();
+  
+  for (var i = 1; i < data.length; i++) {
+    // Assuming col 0 is NIK, col 1 is Password
+    if (data[i][0].toString() === nik && data[i][1].toString() === password) {
+      return ContentService.createTextOutput(JSON.stringify({
+        success: true,
+        role: data[i][2],
+        name: data[i][3]
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+  }
+  
+  return ContentService.createTextOutput(JSON.stringify({
+    success: false,
+    message: "Invalid credentials"
+  })).setMimeType(ContentService.MimeType.JSON);
+}
+
+function handleGetTransactions() {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Transactions");
+  var data = sheet.getDataRange().getValues();
+  var result = [];
+  
+  for (var i = 1; i < data.length; i++) {
+    result.push({
+      id: data[i][0],
+      item: data[i][1],
+      stage: data[i][2],
+      updated: data[i][3]
+    });
+  }
+  
+  return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
+}
+
+function handleAddProgress(data) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  
+  // 1. Record progress log
+  var progressSheet = ss.getSheetByName("Progress");
+  var dateNow = new Date().toISOString();
+  progressSheet.appendRow([data.transactionId, data.stage, data.inputBy, dateNow, data.notes]);
+  
+  // 2. Update current stage in Transactions sheet
+  var transSheet = ss.getSheetByName("Transactions");
+  var transData = transSheet.getDataRange().getValues();
+  
+  for (var i = 1; i < transData.length; i++) {
+    if (transData[i][0] === data.transactionId) {
+      transSheet.getRange(i + 1, 3).setValue(data.stage); // Update stage
+      transSheet.getRange(i + 1, 4).setValue(dateNow); // Update date
+      break;
+    }
+  }
+  
+  return ContentService.createTextOutput(JSON.stringify({success: true})).setMimeType(ContentService.MimeType.JSON);
+}

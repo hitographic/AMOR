@@ -1,0 +1,95 @@
+.inquery-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding-top: 1rem;
+}
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-full);
+}
+
+.search-bar input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 0.875rem;
+}
+
+.search-bar input:focus {
+  outline: none;
+}
+
+.transaction-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.transaction-card {
+  padding: 1.25rem;
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  transition: transform var(--transition-fast);
+}
+
+.transaction-card:active {
+  transform: scale(0.98);
+}
+
+.t-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.t-card-header h4 {
+  font-size: 1rem;
+  color: var(--color-primary);
+  margin: 0;
+}
+
+.t-date {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.t-item {
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.stage-badge {
+  display: inline-block;
+  background: var(--color-warning);
+  color: #856404;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.view-detail-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: transparent;
+  color: var(--color-text-muted);
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--color-border);
+  margin-top: 0.5rem;
+  width: 100%;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 2rem;
+  color: var(--color-text-muted);
+}

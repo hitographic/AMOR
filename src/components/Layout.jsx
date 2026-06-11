@@ -1,0 +1,47 @@
+import { Outlet, NavLink, useNavigate } from 'react-router-dom';
+import { Home, PlusCircle, Search, LogOut } from 'lucide-react';
+import './Layout.css';
+
+function Layout() {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    // Basic logout logic for now
+    localStorage.removeItem('user');
+    navigate('/login');
+  };
+
+  return (
+    <div className="layout-container">
+      <header className="top-header glass-panel">
+        <div className="header-content">
+          <h1 className="app-title">Laskar App 2</h1>
+          <button className="logout-btn" onClick={handleLogout}>
+            <LogOut size={20} />
+          </button>
+        </div>
+      </header>
+
+      <main className="main-content container">
+        <Outlet />
+      </main>
+
+      <nav className="bottom-nav glass-panel">
+        <NavLink to="/dashboard" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
+          <Home size={24} />
+          <span>Home</span>
+        </NavLink>
+        <NavLink to="/input" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
+          <PlusCircle size={24} />
+          <span>Input</span>
+        </NavLink>
+        <NavLink to="/inquery" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
+          <Search size={24} />
+          <span>Inquery</span>
+        </NavLink>
+      </nav>
+    </div>
+  );
+}
+
+export default Layout;
