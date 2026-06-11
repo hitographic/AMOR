@@ -35,6 +35,8 @@ function doPost(e) {
     
     if (action == 'addProgress') {
       return handleAddProgress(data);
+    } else if (action == 'addUser') {
+      return handleAddUser(data);
     }
     
     return ContentService.createTextOutput(JSON.stringify({error: "Action not found"})).setMimeType(ContentService.MimeType.JSON);
@@ -100,6 +102,16 @@ function handleAddProgress(data) {
       break;
     }
   }
+  
+  return ContentService.createTextOutput(JSON.stringify({success: true})).setMimeType(ContentService.MimeType.JSON);
+}
+
+function handleAddUser(data) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Users");
+  
+  // Append new user to the Users sheet
+  // Format: NIK | Password | Role | Name
+  sheet.appendRow([data.nik, data.password, data.role, data.name]);
   
   return ContentService.createTextOutput(JSON.stringify({success: true})).setMimeType(ContentService.MimeType.JSON);
 }

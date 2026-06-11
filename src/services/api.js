@@ -65,5 +65,32 @@ export const api = {
       console.error("Submit Error", error);
       throw error;
     }
+  },
+
+  addUser: async (nik, password, role, name) => {
+    if (!API_URL || API_URL === 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL') {
+      console.warn("API_URL is not set. Mocking user addition.");
+      return { success: true };
+    }
+
+    try {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8',
+        },
+        body: JSON.stringify({
+          action: 'addUser',
+          nik,
+          password,
+          role,
+          name
+        })
+      });
+      return await response.json();
+    } catch (error) {
+      console.error("Add User Error", error);
+      throw error;
+    }
   }
 };
