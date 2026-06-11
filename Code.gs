@@ -73,16 +73,36 @@ function handleLogin(nik, password) {
 }
 
 function handleGetTransactions() {
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Transactions");
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName("Transactions");
   var data = sheet.getDataRange().getValues();
-  var result = [];
   
+  var progressSheet = ss.getSheetByName("Progress");
+  var progressData = progressSheet.getDataRange().getValues();
+  
+  // Group progress by transaction ID
+  // format: Transaction_ID | Stage | Input_By | Date | Notes
+  var historyMap = {};
+  for (var j = 1; j < progressData.length; j++) {
+    var transId = progressData[j][0];
+    var stage = progressData[j][1];
+    var date = progressData[j][3];
+    
+    if (!historyMap[transId]) {
+      historyMap[transId] = {};
+    }
+    historyMap[transId][stage] = date; // This stores the latest date for each stage
+  }
+  
+  var result = [];
   for (var i = 1; i < data.length; i++) {
+    var tid = data[i][0];
     result.push({
-      id: data[i][0],
+      id: tid,
       item: data[i][1],
       stage: data[i][2],
-      updated: data[i][3]
+      updated: data[i][3],
+      history: historyMap[tid] || {}
     });
   }
   

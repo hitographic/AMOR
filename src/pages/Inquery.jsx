@@ -3,6 +3,16 @@ import { Search, ChevronRight, Loader2 } from 'lucide-react';
 import { api } from '../services/api';
 import './Inquery.css';
 
+const STAGES = [
+  'Pembuatan LHA Reject',
+  'LHA Reject to PPIC',
+  'Input SKR',
+  'Harga dari Accounting',
+  'Approval Supplier',
+  'Pembuatan PO',
+  'Muat Return'
+];
+
 function Inquery() {
   const [searchTerm, setSearchTerm] = useState('');
   const [transactions, setTransactions] = useState([]);
@@ -25,10 +35,25 @@ function Inquery() {
     fetchTransactions();
   }, []);
 
-  const filtered = transactions.filter(t => 
-    t.id.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    t.item.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredTransactions = transactions.filter(t => 
+    (t.id && t.id.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (t.item && t.item.toLowerCase().includes(searchTerm.toLowerCase()))
   );
+
+  const formatTime = (isoString) => {
+    if (!isoString) return '-';
+    try {
+      const date = new Date(isoString);
+      // Check if valid date
+      if (isNaN(date.getTime())) return '-';
+      return date.toLocaleString('id-ID', { 
+        day: '2-digit', month: 'short', year: 'numeric',
+        hour: '2-digit', minute:'2-digit' 
+      });
+    } catch {
+      return '-';
+    }
+  };
 
   return (
     <div className="inquery-container">
@@ -54,28 +79,32 @@ function Inquery() {
             <p>Memuat data...</p>
             <style>{`@keyframes spin { 100% { transform: rotate(360deg); } }`}</style>
           </div>
-        ) : filtered.length > 0 ? (
-          filtered.map(t => (
-            <div key={t.id} className="transaction-card glass-panel">
-              <div className="t-card-header">
-                <h4>{t.id}</h4>
-                <span className="t-date">{t.updated ? new Date(t.updated).toLocaleDateString('id-ID') : '-'}</span>
-              </div>
-              <div className="t-card-body">
-                <p className="t-item">{t.item || 'N/A'}</p>
-                <div className="t-stage">
-                  <span className="stage-badge">{t.stage || 'Baru'}</span>
-                </div>
-              </div>
-              <button className="view-detail-btn">
-                <span>Detail</span>
-                <ChevronRight size={16} />
-              </button>
-            </div>
-          ))
+        ) : filteredTransactions.length === 0 ? (
+          <p className="no-data">Tidak ada transaksi ditemukan.</p>
         ) : (
-          <div className="empty-state">
-            <p>Tidak ada transaksi ditemukan.</p>
+          <div className="table-wrapper">
+            <table className="progress-table">
+              <thead>
+                <tr>
+                  <th>Nomor LHA</th>
+                  <th>Item</th>
+                  {STAGES.map(s => <th key={s}>{s}</th>)}
+                </tr>
+              </thead>
+              <tbody>
+                {filteredTransactions.map(tx => (
+                  <tr key={tx.id}>
+                    <td className="sticky-col"><strong>{tx.id}</strong></td>
+                    <td>{tx.item}</td>
+                    {STAGES.map(s => (
+                      <td key={s} className="time-cell">
+                        {formatTime(tx.history ? tx.history[s] : null)}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </div>

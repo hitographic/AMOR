@@ -30,40 +30,70 @@
   gap: 1rem;
 }
 
-.transaction-card {
-  padding: 1.25rem;
+/* Table Styles */
+.table-wrapper {
+  overflow-x: auto;
   border-radius: var(--radius-md);
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  transition: transform var(--transition-fast);
+  border: 1px solid var(--color-border);
+  background: white;
+  margin-top: 1rem;
 }
 
-.transaction-card:active {
-  transform: scale(0.98);
+.progress-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 1000px;
 }
 
-.t-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.progress-table th,
+.progress-table td {
+  padding: 1rem;
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
+  white-space: nowrap;
 }
 
-.t-card-header h4 {
-  font-size: 1rem;
-  color: var(--color-primary);
-  margin: 0;
+.progress-table th {
+  background: var(--color-background);
+  color: var(--color-text);
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
-.t-date {
-  font-size: 0.75rem;
+/* Make first column sticky */
+.progress-table .sticky-col {
+  position: sticky;
+  left: 0;
+  background: white;
+  z-index: 5;
+  border-right: 2px solid var(--color-border);
+}
+
+.progress-table th:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 15;
+  border-right: 2px solid var(--color-border);
+}
+
+.progress-table tbody tr:hover td {
+  background: #f8fafc;
+}
+
+.time-cell {
   color: var(--color-text-muted);
+  font-size: 0.875rem;
 }
 
-.t-item {
-  font-size: 0.875rem;
-  font-weight: 500;
-  margin-bottom: 0.5rem;
+.no-data {
+  text-align: center;
+  color: var(--color-text-muted);
+  padding: 3rem;
+  background: white;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
 }
 
 .stage-badge {
