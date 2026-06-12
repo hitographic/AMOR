@@ -15,6 +15,7 @@ function Dashboard() {
 
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isBroadcastModalOpen, setIsBroadcastModalOpen] = useState(false);
   const [newLha, setNewLha] = useState('');
   const [newItem, setNewItem] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -66,7 +67,7 @@ function Dashboard() {
     }
   };
 
-  const handleBroadcastWA = async () => {
+  const handleBroadcastH1 = async () => {
     try {
       const STAGE_SLA = {
         'LHA Reject to PPIC': { prev: 'Pembuatan LHA Reject', days: 3, role: 'qc' },
@@ -140,6 +141,96 @@ function Dashboard() {
 
       const encodedMsg = encodeURIComponent(message);
       window.open(`https://wa.me/?text=${encodedMsg}`, '_blank');
+      setIsBroadcastModalOpen(false);
+      
+    } catch (error) {
+      console.error(error);
+      alert("Gagal memproses Broadcast WA.");
+    }
+  };
+
+  const handleBroadcastReady = async () => {
+    try {
+      const STAGE_SLA = {
+        'LHA Reject to PPIC': { prev: 'Pembuatan LHA Reject', days: 3, role: 'qc' },
+        'Input SKR': { prev: 'LHA Reject to PPIC', days: 5, role: 'ppic' },
+        'Harga dari Accounting': { prev: 'Input SKR', days: 3, role: 'ppic' },
+        'Approval Supplier': { prev: 'Harga dari Accounting', days: 5, role: 'ppic' },
+        'Pembuatan PO': { prev: 'Approval Supplier', days: 3, role: 'ppic' },
+        'Muat Return': { prev: 'Pembuatan PO', days: 21, role: 'wh' }
+      };
+
+      const STAGES = [
+        'Pembuatan LHA Reject',
+        'LHA Reject to PPIC',
+        'Input SKR',
+        'Harga dari Accounting',
+        'Approval Supplier',
+        'Pembuatan PO',
+        'Muat Return'
+      ];
+
+      const pendingPPIC = [];
+      const pendingWH = [];
+      
+      transactions.forEach(t => {
+        if (t.history && t.history['Muat Return']) return;
+        const nextStage = STAGES.find(s => !t.history || !t.history[s]);
+        if (!nextStage) return;
+
+        const slaConfig = STAGE_SLA[nextStage];
+        if (slaConfig) {
+          if (slaConfig.role === 'ppic') pendingPPIC.push({ id: t.id, stage: nextStage });
+          if (slaConfig.role === 'wh') pendingWH.push({ id: t.id, stage: nextStage });
+        }
+      });
+
+      if (pendingPPIC.length === 0 && pendingWH.length === 0) {
+        alert("Tidak ada LHA yang sedang menunggu konfirmasi lanjutan.");
+        return;
+      }
+
+      const usersList = await api.getUsers();
+      
+      let message = `*Notifikasi Sistem AMOR*\nTerdapat LHA yang menunggu proses lanjutan:\n\n`;
+      
+      if (pendingPPIC.length > 0) {
+        message += `*Menunggu PPIC:*\n`;
+        pendingPPIC.forEach((w, index) => {
+          message += `${index + 1}. ${w.id} (${w.stage})\n`;
+        });
+        message += `cc: `;
+        const ppicUsers = usersList.filter(u => u.role === 'ppic' && u.phone);
+        ppicUsers.forEach(u => {
+          let phone = u.phone;
+          if (phone.startsWith('0')) phone = '62' + phone.substring(1);
+          if (!phone.startsWith('+')) phone = '+' + phone;
+          message += `@${phone} `;
+        });
+        message += `\n\n`;
+      }
+
+      if (pendingWH.length > 0) {
+        message += `*Menunggu WH:*\n`;
+        pendingWH.forEach((w, index) => {
+          message += `${index + 1}. ${w.id} (${w.stage})\n`;
+        });
+        message += `cc: `;
+        const whUsers = usersList.filter(u => u.role === 'wh' && u.phone);
+        whUsers.forEach(u => {
+          let phone = u.phone;
+          if (phone.startsWith('0')) phone = '62' + phone.substring(1);
+          if (!phone.startsWith('+')) phone = '+' + phone;
+          message += `@${phone} `;
+        });
+        message += `\n\n`;
+      }
+
+      message += `Mohon segera diproses!`;
+
+      const encodedMsg = encodeURIComponent(message);
+      window.open(`https://wa.me/?text=${encodedMsg}`, '_blank');
+      setIsBroadcastModalOpen(false);
       
     } catch (error) {
       console.error(error);
@@ -237,7 +328,7 @@ function Dashboard() {
         </div>
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
           {(userRole === 'admin' || userRole === 'qc') && (
-            <button className="add-lha-btn" onClick={handleBroadcastWA} style={{ background: '#25D366' }} title="Kirim Notif via WhatsApp">
+            <button className="add-lha-btn" onClick={() => setIsBroadcastModalOpen(true)} style={{ background: '#25D366' }} title="Kirim Notif via WhatsApp">
               <MessageCircle size={20} />
               <span>Broadcast WA</span>
             </button>
@@ -404,6 +495,35 @@ function Dashboard() {
                 {isSubmitting ? 'Memproses...' : 'Buat LHA Baru'}
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {isBroadcastModalOpen && (
+        <div className="modal-overlay">
+          <div className="modal-content glass-panel" style={{ maxWidth: '400px' }}>
+            <div className="modal-header">
+              <h3>Pilih Jenis Broadcast WA</h3>
+              <button className="close-btn" onClick={() => setIsBroadcastModalOpen(false)}><X size={20} /></button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1rem' }}>
+              <button 
+                onClick={handleBroadcastH1} 
+                className="submit-btn" 
+                style={{ background: 'var(--color-warning)', color: 'var(--color-text-main)', display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }}
+              >
+                <AlertCircle size={20} />
+                LHA H-1 SLA
+              </button>
+              <button 
+                onClick={handleBroadcastReady} 
+                className="submit-btn" 
+                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }}
+              >
+                <CheckCircle size={20} />
+                Data Menunggu Dikonfirmasi
+              </button>
+            </div>
           </div>
         </div>
       )}
