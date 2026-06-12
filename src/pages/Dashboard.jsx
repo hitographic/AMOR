@@ -91,7 +91,7 @@ function Dashboard() {
       const warningTxs = [];
       const rolesNeeded = new Set();
       const now = new Date();
-      
+
       transactions.forEach(t => {
         if (t.history && t.history['Muat Return']) return;
         const nextStage = STAGES.find(s => !t.history || !t.history[s]);
@@ -122,12 +122,12 @@ function Dashboard() {
 
       // Fetch users to get their phone numbers
       const usersList = await api.getUsers();
-      
+
       let message = `*Notifikasi Sistem AMOR*\nTerdapat ${warningTxs.length} LHA yang mencapai H-1 SLA:\n`;
       warningTxs.forEach((w, index) => {
         message += `${index + 1}. ${w.id} menunggu ${w.role.toUpperCase()} (${w.stage})\n`;
       });
-      message += `\nMohon segera diproses!\n\ncc :\n`;
+      message += `\nMohon segera diproses :)\n\ncc :\n`;
 
       rolesNeeded.forEach(role => {
         const roleUsers = usersList.filter(u => u.role === role && u.phone);
@@ -142,7 +142,7 @@ function Dashboard() {
       const encodedMsg = encodeURIComponent(message);
       window.open(`https://wa.me/?text=${encodedMsg}`, '_blank');
       setIsBroadcastModalOpen(false);
-      
+
     } catch (error) {
       console.error(error);
       alert("Gagal memproses Broadcast WA.");
@@ -172,7 +172,7 @@ function Dashboard() {
 
       const pendingPPIC = [];
       const pendingWH = [];
-      
+
       transactions.forEach(t => {
         if (t.history && t.history['Muat Return']) return;
         const nextStage = STAGES.find(s => !t.history || !t.history[s]);
@@ -191,9 +191,9 @@ function Dashboard() {
       }
 
       const usersList = await api.getUsers();
-      
+
       let message = `*Notifikasi Sistem AMOR*\nTerdapat LHA yang menunggu proses lanjutan:\n\n`;
-      
+
       if (pendingPPIC.length > 0) {
         message += `*Menunggu PPIC:*\n`;
         pendingPPIC.forEach((w, index) => {
@@ -226,12 +226,12 @@ function Dashboard() {
         message += `\n\n`;
       }
 
-      message += `Mohon segera diproses!`;
+      message += `Mohon segera diproses :)`;
 
       const encodedMsg = encodeURIComponent(message);
       window.open(`https://wa.me/?text=${encodedMsg}`, '_blank');
       setIsBroadcastModalOpen(false);
-      
+
     } catch (error) {
       console.error(error);
       alert("Gagal memproses Broadcast WA.");
@@ -259,7 +259,7 @@ function Dashboard() {
 
   const filteredTransactions = transactions.filter(t => {
     // 1. Search term
-    const matchesSearch = 
+    const matchesSearch =
       (t.id && t.id.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (t.item && t.item.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (t.stage && t.stage.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -288,13 +288,13 @@ function Dashboard() {
 
     transactions.forEach(t => {
       const currentStage = t.stage || 'Pembuatan LHA Reject';
-      
+
       if (currentStage === 'Pembuatan LHA Reject') {
         pendingQC++;
       } else if ([
-        'LHA Reject to PPIC', 
-        'Input SKR', 
-        'Harga dari Accounting', 
+        'LHA Reject to PPIC',
+        'Input SKR',
+        'Harga dari Accounting',
         'Approval Supplier'
       ].includes(currentStage)) {
         pendingPPIC++;
@@ -344,8 +344,8 @@ function Dashboard() {
 
       {/* Statistics Grid */}
       <div className="stats-grid">
-        <div 
-          className={`stat-card glass-panel clickable ${activeFilter === 'ALL' ? 'active-filter' : ''}`} 
+        <div
+          className={`stat-card glass-panel clickable ${activeFilter === 'ALL' ? 'active-filter' : ''}`}
           style={{ borderLeft: '4px solid var(--color-text-muted)' }}
           onClick={() => setActiveFilter('ALL')}
         >
@@ -357,9 +357,9 @@ function Dashboard() {
             <p>{stats.total}</p>
           </div>
         </div>
-        
-        <div 
-          className={`stat-card glass-panel clickable ${activeFilter === 'PENDING_QC' ? 'active-filter' : ''}`} 
+
+        <div
+          className={`stat-card glass-panel clickable ${activeFilter === 'PENDING_QC' ? 'active-filter' : ''}`}
           style={{ borderLeft: '4px solid var(--color-warning)' }}
           onClick={() => setActiveFilter('PENDING_QC')}
         >
@@ -372,8 +372,8 @@ function Dashboard() {
           </div>
         </div>
 
-        <div 
-          className={`stat-card glass-panel clickable ${activeFilter === 'PENDING_PPIC' ? 'active-filter' : ''}`} 
+        <div
+          className={`stat-card glass-panel clickable ${activeFilter === 'PENDING_PPIC' ? 'active-filter' : ''}`}
           style={{ borderLeft: '4px solid #8b5cf6' }}
           onClick={() => setActiveFilter('PENDING_PPIC')}
         >
@@ -386,8 +386,8 @@ function Dashboard() {
           </div>
         </div>
 
-        <div 
-          className={`stat-card glass-panel clickable ${activeFilter === 'PENDING_WH' ? 'active-filter' : ''}`} 
+        <div
+          className={`stat-card glass-panel clickable ${activeFilter === 'PENDING_WH' ? 'active-filter' : ''}`}
           style={{ borderLeft: '4px solid var(--color-success)' }}
           onClick={() => setActiveFilter('PENDING_WH')}
         >
@@ -403,9 +403,9 @@ function Dashboard() {
 
       <div className="search-bar glass-panel">
         <Search size={18} color="var(--color-text-muted)" />
-        <input 
-          type="text" 
-          placeholder="Cari Nomor LHA, Item, atau Status..." 
+        <input
+          type="text"
+          placeholder="Cari Nomor LHA, Item, atau Status..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
@@ -424,8 +424,8 @@ function Dashboard() {
           </div>
         ) : (
           filteredTransactions.map(t => (
-            <div 
-              key={t.id} 
+            <div
+              key={t.id}
               className={`lha-card glass-panel ${t.stage === 'Muat Return' ? 'completed-card' : ''}`}
               onClick={() => navigate(`/inquery?id=${encodeURIComponent(t.id)}`)}
             >
@@ -439,8 +439,8 @@ function Dashboard() {
                     {t.stage || 'Baru'}
                   </span>
                   {(userRole === 'admin' || userRole === 'qc') && (
-                    <button 
-                      className="delete-lha-btn" 
+                    <button
+                      className="delete-lha-btn"
                       onClick={(e) => handleDeleteTransaction(e, t.id)}
                       title="Hapus LHA"
                     >
@@ -456,7 +456,7 @@ function Dashboard() {
                 </div>
                 <div className="info-row">
                   <Clock size={16} />
-                  <span>{t.updated ? new Date(t.updated).toLocaleString('id-ID', {day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute:'2-digit'}) : '-'}</span>
+                  <span>{t.updated ? new Date(t.updated).toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-'}</span>
                 </div>
               </div>
             </div>
@@ -474,8 +474,8 @@ function Dashboard() {
             <form onSubmit={handleCreateLha} className="standard-form">
               <div className="form-group">
                 <label>Nomor LHA</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   value={newLha}
                   onChange={(e) => setNewLha(e.target.value)}
                   placeholder="e.g. 2808/001P3/200/11062026/IQC-R3"
@@ -484,8 +484,8 @@ function Dashboard() {
               </div>
               <div className="form-group">
                 <label>Nama Item (Opsional)</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   value={newItem}
                   onChange={(e) => setNewItem(e.target.value)}
                   placeholder="e.g. Indomie Goreng"
@@ -507,17 +507,17 @@ function Dashboard() {
               <button className="close-btn" onClick={() => setIsBroadcastModalOpen(false)}><X size={20} /></button>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1rem' }}>
-              <button 
-                onClick={handleBroadcastH1} 
-                className="submit-btn" 
+              <button
+                onClick={handleBroadcastH1}
+                className="submit-btn"
                 style={{ background: 'var(--color-warning)', color: 'var(--color-text-main)', display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }}
               >
                 <AlertCircle size={20} />
                 LHA H-1 SLA
               </button>
-              <button 
-                onClick={handleBroadcastReady} 
-                className="submit-btn" 
+              <button
+                onClick={handleBroadcastReady}
+                className="submit-btn"
                 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }}
               >
                 <CheckCircle size={20} />
