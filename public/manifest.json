@@ -2,8 +2,8 @@
   "name": "AMOR - Aplikasi Monitoring Retur",
   "short_name": "AMOR",
   "start_url": "./",
-  "display": "standalone",
-  "background_color": "#f8fafc",
+  "display": "fullscreen",
+  "background_color": "#ffffff",
   "theme_color": "#3b82f6",
   "icons": [
     {
@@ -15,7 +15,7 @@
       "src": "launcher.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ]
 }
