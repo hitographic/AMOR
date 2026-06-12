@@ -63,7 +63,8 @@ function InputProgress() {
             filteredData = data.filter(t => t.history && t.history['Pembuatan PO'] && !t.history['Muat Return']);
           }
 
-          setExistingLHAs(filteredData.map(t => t.id));
+          // Store full objects instead of just IDs so we can check history later
+          setExistingLHAs(filteredData);
         }
       } catch (error) {
         console.error("Failed to load existing LHAs", error);
@@ -73,6 +74,9 @@ function InputProgress() {
     };
     fetchLHAs();
   }, [stage]);
+
+  // Find the currently selected transaction object
+  const selectedTx = existingLHAs.find(t => t.id === transactionId);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -135,8 +139,8 @@ function InputProgress() {
               <option value="" disabled>
                 {isLoadingLHAs ? 'Memuat daftar LHA...' : 'Pilih Nomor LHA yang sudah ada'}
               </option>
-              {existingLHAs.map((id) => (
-                <option key={id} value={id}>{id}</option>
+              {existingLHAs.map((tx) => (
+                <option key={tx.id} value={tx.id}>{tx.id}</option>
               ))}
             </select>
           </div>
@@ -149,9 +153,14 @@ function InputProgress() {
               required
             >
               <option value="" disabled>Pilih tahapan...</option>
-              {(ROLE_STAGES[userRole] || STAGES).map(s => (
-                <option key={s} value={s}>{s}</option>
-              ))}
+              {(ROLE_STAGES[userRole] || STAGES).map(s => {
+                const isCompleted = selectedTx && selectedTx.history && selectedTx.history[s];
+                return (
+                  <option key={s} value={s} disabled={!!isCompleted}>
+                    {s} {isCompleted ? '(Selesai)' : ''}
+                  </option>
+                );
+              })}
             </select>
           </div>
 
