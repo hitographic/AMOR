@@ -23,7 +23,7 @@ function Dashboard() {
     if (storedUser) {
       const parsed = JSON.parse(storedUser);
       setUserRole(parsed.role || 'admin');
-      setUserName(parsed.name || '');
+      setUserName(parsed.name || parsed.nik || 'Unknown');
     }
     fetchTransactions();
   }, []);
