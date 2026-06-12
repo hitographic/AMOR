@@ -42,9 +42,7 @@ function Login() {
     <div className="login-container">
       <div className="login-card glass-panel">
         <div className="login-header">
-          <h2>Welcome to</h2>
           <img src={loginLogo} alt="AMOR Login" className="login-logo" />
-
         </div>
 
         {error && <div className="error-message">{error}</div>}
