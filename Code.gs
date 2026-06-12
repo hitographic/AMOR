@@ -174,7 +174,8 @@ function handleGetUsers() {
       nik: row[0],
       // We purposefully DO NOT send the password (row[1]) back to the frontend for security!
       role: row[2],
-      name: row[3]
+      name: row[3],
+      phone: row[4] ? String(row[4]).trim() : ''
     });
   }
   

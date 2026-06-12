@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Plus, X, Loader2, FileText, Clock, Box, ClipboardList, AlertCircle, CheckCircle, Trash2 } from 'lucide-react';
+import { Search, Plus, X, Loader2, FileText, Clock, Box, ClipboardList, AlertCircle, CheckCircle, Trash2, MessageCircle } from 'lucide-react';
 import { api } from '../services/api';
 import './Dashboard.css';
 
@@ -154,12 +154,20 @@ function Dashboard() {
           <h2>Daftar Transaksi LHA</h2>
           <p>Pantau semua proses retur</p>
         </div>
-        {(userRole === 'admin' || userRole === 'qc') && (
-          <button className="add-lha-btn" onClick={() => setIsModalOpen(true)}>
-            <Plus size={20} />
-            <span>Tambah Data</span>
-          </button>
-        )}
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          {(userRole === 'admin' || userRole === 'qc') && (
+            <button className="add-lha-btn" onClick={handleBroadcastWA} style={{ background: '#25D366' }} title="Kirim Notif via WhatsApp">
+              <MessageCircle size={20} />
+              <span>Broadcast WA</span>
+            </button>
+          )}
+          {(userRole === 'admin' || userRole === 'qc') && (
+            <button className="add-lha-btn" onClick={() => setIsModalOpen(true)}>
+              <Plus size={20} />
+              <span>Tambah Data</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Statistics Grid */}
