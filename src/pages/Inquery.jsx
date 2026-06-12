@@ -48,7 +48,6 @@ function Inquery() {
     if (!isoString) return '-';
     try {
       const date = new Date(isoString);
-      // Check if valid date
       if (isNaN(date.getTime())) return '-';
       return date.toLocaleString('id-ID', { 
         day: '2-digit', month: 'short', year: 'numeric',
@@ -59,17 +58,68 @@ function Inquery() {
     }
   };
 
-  // If no specific transaction is selected, show a message or list
+  // If no specific transaction is selected, show the TABLE list view
   if (!transactionId) {
     return (
       <div className="inquery-container">
         <div className="page-header">
           <h2>Inquery Progress</h2>
-          <p>Pilih salah satu transaksi dari Dashboard untuk melihat detail progres.</p>
+          <p>Lacak status retur barang secara keseluruhan</p>
         </div>
-        <button className="primary-btn" onClick={() => navigate('/')} style={{marginTop: '1rem'}}>
-          Kembali ke Dashboard
-        </button>
+
+        <div className="search-bar glass-panel">
+          <Search size={18} color="var(--color-text-muted)" />
+          <input 
+            type="text" 
+            placeholder="Cari LHA Number atau Nama Item..." 
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+
+        <div className="transaction-list">
+          {isLoading ? (
+            <div className="empty-state">
+              <Loader2 className="spinning-icon" size={24} style={{ margin: '0 auto', marginBottom: '0.5rem', animation: 'spin 1s linear infinite' }} />
+              <p>Memuat data...</p>
+              <style>{`@keyframes spin { 100% { transform: rotate(360deg); } }`}</style>
+            </div>
+          ) : filteredTransactions.length === 0 ? (
+            <p className="no-data">Tidak ada transaksi ditemukan.</p>
+          ) : (
+            <div className="table-wrapper">
+              <table className="progress-table">
+                <thead>
+                  <tr>
+                    <th>Nomor LHA</th>
+                    <th>Item</th>
+                    {STAGES.map(s => <th key={s}>{s}</th>)}
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredTransactions.map(tx => (
+                    <tr key={tx.id}>
+                      <td className="sticky-col">
+                        <strong 
+                          style={{ cursor: 'pointer', color: 'var(--color-primary)' }}
+                          onClick={() => navigate(`/inquery?id=${encodeURIComponent(tx.id)}`)}
+                        >
+                          {tx.id}
+                        </strong>
+                      </td>
+                      <td>{tx.item}</td>
+                      {STAGES.map(s => (
+                        <td key={s} className="time-cell">
+                          {formatTime(tx.history ? tx.history[s]?.date : null)}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </div>
     );
   }

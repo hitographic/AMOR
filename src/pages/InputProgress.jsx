@@ -66,7 +66,7 @@ function InputProgress() {
     
     try {
       const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
-      const inputBy = storedUser.nik || 'Unknown';
+      const inputBy = storedUser.name || storedUser.nik || 'Unknown';
       
       const result = await api.addProgress(transactionId, stage, notes, inputBy);
       
