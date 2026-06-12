@@ -99,10 +99,15 @@ function InputProgress() {
         if (timeWarning) {
           setNotification(timeWarning);
         } else {
-          setNotification('Progress berhasil diinput.');
+          setNotification('Progress berhasil diinput. Memperbarui data...');
         }
         setTransactionId('');
         setNotes('');
+        
+        // Refresh to update dropdowns and lists
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
       } else {
         setNotification('Gagal menginput progress: ' + (result.error || 'Unknown error'));
       }
@@ -157,7 +162,7 @@ function InputProgress() {
                 const isCompleted = selectedTx && selectedTx.history && selectedTx.history[s];
                 return (
                   <option key={s} value={s} disabled={!!isCompleted}>
-                    {s} {isCompleted ? '(Selesai)' : ''}
+                    {isCompleted ? `✓ ${s}` : s}
                   </option>
                 );
               })}
