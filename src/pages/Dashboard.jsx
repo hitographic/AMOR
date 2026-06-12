@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Plus, X, Loader2, FileText, Clock, Box } from 'lucide-react';
+import { Search, Plus, X, Loader2, FileText, Clock, Box, ClipboardList, AlertCircle } from 'lucide-react';
 import { api } from '../services/api';
 import './Dashboard.css';
 
@@ -71,6 +71,37 @@ function Dashboard() {
     (t.stage && t.stage.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
+  // Calculate Statistics
+  const stats = useMemo(() => {
+    let pendingQC = 0;
+    let pendingPPIC = 0;
+    let pendingWH = 0;
+
+    transactions.forEach(t => {
+      const currentStage = t.stage || 'Pembuatan LHA Reject';
+      
+      if (currentStage === 'Pembuatan LHA Reject') {
+        pendingQC++;
+      } else if ([
+        'LHA Reject to PPIC', 
+        'Input SKR', 
+        'Harga dari Accounting', 
+        'Approval Supplier'
+      ].includes(currentStage)) {
+        pendingPPIC++;
+      } else if (currentStage === 'Pembuatan PO') {
+        pendingWH++;
+      }
+    });
+
+    return {
+      total: transactions.length,
+      pendingQC,
+      pendingPPIC,
+      pendingWH
+    };
+  }, [transactions]);
+
   return (
     <div className="dashboard-container">
       <div className="dash-header">
@@ -84,6 +115,49 @@ function Dashboard() {
             <span>Tambah Data</span>
           </button>
         )}
+      </div>
+
+      {/* Statistics Grid */}
+      <div className="stats-grid">
+        <div className="stat-card glass-panel" style={{ borderLeft: '4px solid var(--color-primary)' }}>
+          <div className="stat-icon" style={{ background: 'rgba(37, 99, 235, 0.1)', color: 'var(--color-primary)' }}>
+            <ClipboardList size={24} />
+          </div>
+          <div className="stat-info">
+            <h3>Total LHA</h3>
+            <p>{stats.total}</p>
+          </div>
+        </div>
+        
+        <div className="stat-card glass-panel" style={{ borderLeft: '4px solid var(--color-warning)' }}>
+          <div className="stat-icon" style={{ background: 'rgba(245, 158, 11, 0.1)', color: 'var(--color-warning)' }}>
+            <AlertCircle size={24} />
+          </div>
+          <div className="stat-info">
+            <h3>Pending QC</h3>
+            <p>{stats.pendingQC}</p>
+          </div>
+        </div>
+
+        <div className="stat-card glass-panel" style={{ borderLeft: '4px solid #8b5cf6' }}>
+          <div className="stat-icon" style={{ background: 'rgba(139, 92, 246, 0.1)', color: '#8b5cf6' }}>
+            <AlertCircle size={24} />
+          </div>
+          <div className="stat-info">
+            <h3>Pending PPIC</h3>
+            <p>{stats.pendingPPIC}</p>
+          </div>
+        </div>
+
+        <div className="stat-card glass-panel" style={{ borderLeft: '4px solid var(--color-success)' }}>
+          <div className="stat-icon" style={{ background: 'rgba(16, 185, 129, 0.1)', color: 'var(--color-success)' }}>
+            <AlertCircle size={24} />
+          </div>
+          <div className="stat-info">
+            <h3>Pending WH</h3>
+            <p>{stats.pendingWH}</p>
+          </div>
+        </div>
       </div>
 
       <div className="search-bar glass-panel">
