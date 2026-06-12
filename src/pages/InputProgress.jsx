@@ -32,13 +32,15 @@ function InputProgress() {
   const [isLoadingLHAs, setIsLoadingLHAs] = useState(true);
 
   useEffect(() => {
+    let currentRole = 'admin';
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
       const parsed = JSON.parse(storedUser);
-      setUserRole(parsed.role || 'admin');
+      currentRole = parsed.role || 'admin';
+      setUserRole(currentRole);
       
       // Auto-select first available stage based on role if default is not available
-      const availableStages = ROLE_STAGES[parsed.role] || STAGES;
+      const availableStages = ROLE_STAGES[currentRole] || STAGES;
       if (!availableStages.includes(stage)) {
         setStage(availableStages[0] || '');
       }
@@ -48,7 +50,20 @@ function InputProgress() {
       try {
         const data = await api.getTransactions();
         if (Array.isArray(data)) {
-          setExistingLHAs(data.map(t => t.id));
+          let filteredData = data;
+          
+          if (currentRole === 'qc') {
+            // QC can only process if it hasn't passed QC's final stage
+            filteredData = data.filter(t => !t.history || !t.history['LHA Reject to PPIC']);
+          } else if (currentRole === 'ppic') {
+            // PPIC can only process if QC is done, but PPIC is not done
+            filteredData = data.filter(t => t.history && t.history['LHA Reject to PPIC'] && !t.history['Pembuatan PO']);
+          } else if (currentRole === 'wh') {
+            // WH can only process if PPIC is done, but WH is not done
+            filteredData = data.filter(t => t.history && t.history['Pembuatan PO'] && !t.history['Muat Return']);
+          }
+
+          setExistingLHAs(filteredData.map(t => t.id));
         }
       } catch (error) {
         console.error("Failed to load existing LHAs", error);
@@ -57,7 +72,7 @@ function InputProgress() {
       }
     };
     fetchLHAs();
-  }, []);
+  }, [stage]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
