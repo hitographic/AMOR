@@ -66,6 +66,87 @@ function Dashboard() {
     }
   };
 
+  const handleBroadcastWA = async () => {
+    try {
+      const STAGE_SLA = {
+        'LHA Reject to PPIC': { prev: 'Pembuatan LHA Reject', days: 3, role: 'qc' },
+        'Input SKR': { prev: 'LHA Reject to PPIC', days: 5, role: 'ppic' },
+        'Harga dari Accounting': { prev: 'Input SKR', days: 3, role: 'ppic' },
+        'Approval Supplier': { prev: 'Harga dari Accounting', days: 5, role: 'ppic' },
+        'Pembuatan PO': { prev: 'Approval Supplier', days: 3, role: 'ppic' },
+        'Muat Return': { prev: 'Pembuatan PO', days: 21, role: 'wh' }
+      };
+
+      const STAGES = [
+        'Pembuatan LHA Reject',
+        'LHA Reject to PPIC',
+        'Input SKR',
+        'Harga dari Accounting',
+        'Approval Supplier',
+        'Pembuatan PO',
+        'Muat Return'
+      ];
+
+      const warningTxs = [];
+      const rolesNeeded = new Set();
+      const now = new Date();
+      
+      transactions.forEach(t => {
+        if (t.history && t.history['Muat Return']) return;
+        const nextStage = STAGES.find(s => !t.history || !t.history[s]);
+        if (!nextStage) return;
+
+        const slaConfig = STAGE_SLA[nextStage];
+        if (slaConfig) {
+          const prevStageDateStr = t.history[slaConfig.prev]?.date;
+          if (prevStageDateStr) {
+            const prevDate = new Date(prevStageDateStr);
+            const deadline = new Date(prevDate);
+            deadline.setDate(deadline.getDate() + slaConfig.days);
+            const daysUntilDeadline = (deadline - now) / (1000 * 60 * 60 * 24);
+
+            // if it's <= 1 day, it means it's H-1 or already late
+            if (daysUntilDeadline <= 1) {
+              warningTxs.push({ id: t.id, stage: nextStage, role: slaConfig.role });
+              rolesNeeded.add(slaConfig.role);
+            }
+          }
+        }
+      });
+
+      if (warningTxs.length === 0) {
+        alert("Tidak ada LHA yang mendekati batas waktu (H-1 SLA).");
+        return;
+      }
+
+      // Fetch users to get their phone numbers
+      const usersList = await api.getUsers();
+      
+      let message = `*Notifikasi Sistem AMOR*\nTerdapat ${warningTxs.length} LHA yang mencapai H-1 SLA:\n`;
+      warningTxs.forEach((w, index) => {
+        message += `${index + 1}. ${w.id} menunggu ${w.role.toUpperCase()} (${w.stage})\n`;
+      });
+      message += `\nMohon segera diproses!\n\ncc :\n`;
+
+      rolesNeeded.forEach(role => {
+        const roleUsers = usersList.filter(u => u.role === role && u.phone);
+        roleUsers.forEach(u => {
+          let phone = u.phone;
+          if (phone.startsWith('0')) phone = '62' + phone.substring(1);
+          if (!phone.startsWith('+')) phone = '+' + phone;
+          message += `@${phone}\n`;
+        });
+      });
+
+      const encodedMsg = encodeURIComponent(message);
+      window.open(`https://wa.me/?text=${encodedMsg}`, '_blank');
+      
+    } catch (error) {
+      console.error(error);
+      alert("Gagal memproses Broadcast WA.");
+    }
+  };
+
   const handleDeleteTransaction = async (e, id) => {
     e.stopPropagation(); // prevent card click
     if (window.confirm(`Apakah Anda yakin ingin menghapus transaksi LHA ${id}?`)) {
