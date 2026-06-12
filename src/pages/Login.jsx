@@ -17,7 +17,7 @@ function Login() {
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
-    
+
     if (nik && password) {
       setIsLoading(true);
       try {
@@ -44,7 +44,7 @@ function Login() {
         <div className="login-header">
           <h2>Welcome to</h2>
           <img src={loginLogo} alt="AMOR Login" className="login-logo" />
-          <p>Aplikasi Monitoring Retur</p>
+
         </div>
 
         {error && <div className="error-message">{error}</div>}
@@ -52,8 +52,8 @@ function Login() {
         <form onSubmit={handleLogin} className="login-form">
           <div className="form-group">
             <label>NIK</label>
-            <input 
-              type="text" 
+            <input
+              type="text"
               value={nik}
               onChange={(e) => setNik(e.target.value)}
               placeholder="Masukkan NIK Anda"
@@ -63,14 +63,14 @@ function Login() {
           <div className="form-group">
             <label>Password</label>
             <div className="password-input-wrapper">
-              <input 
-                type={showPassword ? 'text' : 'password'} 
+              <input
+                type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Masukkan Password"
               />
-              <button 
-                type="button" 
+              <button
+                type="button"
                 className="toggle-password"
                 onClick={() => setShowPassword(!showPassword)}
               >
