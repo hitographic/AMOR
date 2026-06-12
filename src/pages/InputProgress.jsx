@@ -78,6 +78,20 @@ function InputProgress() {
   // Find the currently selected transaction object
   const selectedTx = existingLHAs.find(t => t.id === transactionId);
 
+  // Determine the next stage in the sequence
+  const nextStageToComplete = selectedTx 
+    ? STAGES.find(s => !selectedTx.history || !selectedTx.history[s])
+    : null;
+
+  // Auto-select the next stage when transaction changes
+  useEffect(() => {
+    if (nextStageToComplete && (ROLE_STAGES[userRole] || STAGES).includes(nextStageToComplete)) {
+      setStage(nextStageToComplete);
+    } else {
+      setStage('');
+    }
+  }, [selectedTx, nextStageToComplete, userRole]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -151,21 +165,19 @@ function InputProgress() {
           </div>
 
           <div className="form-group">
-            <label>Pilih Tahapan Progres</label>
+            <label>Tahapan Progres Selanjutnya</label>
             <select 
               value={stage} 
               onChange={(e) => setStage(e.target.value)}
               required
             >
-              <option value="" disabled>Pilih tahapan...</option>
-              {(ROLE_STAGES[userRole] || STAGES).map(s => {
-                const isCompleted = selectedTx && selectedTx.history && selectedTx.history[s];
-                return (
-                  <option key={s} value={s} disabled={!!isCompleted}>
-                    {isCompleted ? `✓ ${s}` : s}
-                  </option>
-                );
-              })}
+              {!transactionId ? (
+                <option value="" disabled>Pilih LHA terlebih dahulu</option>
+              ) : nextStageToComplete && (ROLE_STAGES[userRole] || STAGES).includes(nextStageToComplete) ? (
+                <option value={nextStageToComplete}>{nextStageToComplete}</option>
+              ) : (
+                <option value="" disabled>Tidak ada tahapan tersedia untuk Anda</option>
+              )}
             </select>
           </div>
 
