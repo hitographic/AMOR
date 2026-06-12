@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Plus, X, Loader2, FileText, Clock, Box, ClipboardList, AlertCircle } from 'lucide-react';
+import { Search, Plus, X, Loader2, FileText, Clock, Box, ClipboardList, AlertCircle, CheckCircle, Trash2 } from 'lucide-react';
 import { api } from '../services/api';
 import './Dashboard.css';
 
@@ -8,6 +8,7 @@ function Dashboard() {
   const navigate = useNavigate();
   const [transactions, setTransactions] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [activeFilter, setActiveFilter] = useState('ALL');
   const [isLoading, setIsLoading] = useState(true);
   const [userRole, setUserRole] = useState('admin');
   const [userName, setUserName] = useState('');
@@ -65,11 +66,47 @@ function Dashboard() {
     }
   };
 
-  const filteredTransactions = transactions.filter(t => 
-    (t.id && t.id.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (t.item && t.item.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (t.stage && t.stage.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const handleDeleteTransaction = async (e, id) => {
+    e.stopPropagation(); // prevent card click
+    if (window.confirm(`Apakah Anda yakin ingin menghapus transaksi LHA ${id}?`)) {
+      setIsLoading(true);
+      try {
+        const res = await api.deleteTransaction(id);
+        if (res.success) {
+          fetchTransactions();
+        } else {
+          alert('Gagal menghapus LHA');
+          setIsLoading(false);
+        }
+      } catch (error) {
+        alert('Kesalahan saat menghapus');
+        setIsLoading(false);
+      }
+    }
+  };
+
+  const filteredTransactions = transactions.filter(t => {
+    // 1. Search term
+    const matchesSearch = 
+      (t.id && t.id.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (t.item && t.item.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (t.stage && t.stage.toLowerCase().includes(searchTerm.toLowerCase()));
+
+    if (!matchesSearch) return false;
+
+    // 2. Active filter
+    const currentStage = t.stage || 'Pembuatan LHA Reject';
+    if (activeFilter === 'PENDING_QC') {
+      return currentStage === 'Pembuatan LHA Reject';
+    }
+    if (activeFilter === 'PENDING_PPIC') {
+      return ['LHA Reject to PPIC', 'Input SKR', 'Harga dari Accounting', 'Approval Supplier'].includes(currentStage);
+    }
+    if (activeFilter === 'PENDING_WH') {
+      return currentStage === 'Pembuatan PO';
+    }
+    return true; // ALL
+  });
 
   // Calculate Statistics
   const stats = useMemo(() => {
@@ -102,6 +139,14 @@ function Dashboard() {
     };
   }, [transactions]);
 
+  const getBadgeColor = (stage) => {
+    const s = stage || 'Pembuatan LHA Reject';
+    if (['Pembuatan LHA Reject', 'LHA Reject to PPIC'].includes(s)) return 'var(--color-primary)'; // Biru
+    if (['Input SKR', 'Harga dari Accounting', 'Approval Supplier', 'Pembuatan PO'].includes(s)) return '#8b5cf6'; // Ungu
+    if (s === 'Muat Return') return 'var(--color-success)'; // Hijau
+    return 'var(--color-text-muted)';
+  };
+
   return (
     <div className="dashboard-container">
       <div className="dash-header">
@@ -119,8 +164,12 @@ function Dashboard() {
 
       {/* Statistics Grid */}
       <div className="stats-grid">
-        <div className="stat-card glass-panel" style={{ borderLeft: '4px solid var(--color-primary)' }}>
-          <div className="stat-icon" style={{ background: 'rgba(37, 99, 235, 0.1)', color: 'var(--color-primary)' }}>
+        <div 
+          className={`stat-card glass-panel clickable ${activeFilter === 'ALL' ? 'active-filter' : ''}`} 
+          style={{ borderLeft: '4px solid var(--color-text-muted)' }}
+          onClick={() => setActiveFilter('ALL')}
+        >
+          <div className="stat-icon" style={{ background: 'rgba(100, 116, 139, 0.1)', color: 'var(--color-text-muted)' }}>
             <ClipboardList size={24} />
           </div>
           <div className="stat-info">
@@ -129,7 +178,11 @@ function Dashboard() {
           </div>
         </div>
         
-        <div className="stat-card glass-panel" style={{ borderLeft: '4px solid var(--color-warning)' }}>
+        <div 
+          className={`stat-card glass-panel clickable ${activeFilter === 'PENDING_QC' ? 'active-filter' : ''}`} 
+          style={{ borderLeft: '4px solid var(--color-warning)' }}
+          onClick={() => setActiveFilter('PENDING_QC')}
+        >
           <div className="stat-icon" style={{ background: 'rgba(245, 158, 11, 0.1)', color: 'var(--color-warning)' }}>
             <AlertCircle size={24} />
           </div>
@@ -139,7 +192,11 @@ function Dashboard() {
           </div>
         </div>
 
-        <div className="stat-card glass-panel" style={{ borderLeft: '4px solid #8b5cf6' }}>
+        <div 
+          className={`stat-card glass-panel clickable ${activeFilter === 'PENDING_PPIC' ? 'active-filter' : ''}`} 
+          style={{ borderLeft: '4px solid #8b5cf6' }}
+          onClick={() => setActiveFilter('PENDING_PPIC')}
+        >
           <div className="stat-icon" style={{ background: 'rgba(139, 92, 246, 0.1)', color: '#8b5cf6' }}>
             <AlertCircle size={24} />
           </div>
@@ -149,7 +206,11 @@ function Dashboard() {
           </div>
         </div>
 
-        <div className="stat-card glass-panel" style={{ borderLeft: '4px solid var(--color-success)' }}>
+        <div 
+          className={`stat-card glass-panel clickable ${activeFilter === 'PENDING_WH' ? 'active-filter' : ''}`} 
+          style={{ borderLeft: '4px solid var(--color-success)' }}
+          onClick={() => setActiveFilter('PENDING_WH')}
+        >
           <div className="stat-icon" style={{ background: 'rgba(16, 185, 129, 0.1)', color: 'var(--color-success)' }}>
             <AlertCircle size={24} />
           </div>
@@ -185,15 +246,28 @@ function Dashboard() {
           filteredTransactions.map(t => (
             <div 
               key={t.id} 
-              className="lha-card glass-panel"
+              className={`lha-card glass-panel ${t.stage === 'Muat Return' ? 'completed-card' : ''}`}
               onClick={() => navigate(`/inquery?id=${encodeURIComponent(t.id)}`)}
             >
               <div className="lha-card-header">
                 <div className="lha-id">
-                  <FileText size={18} />
+                  {t.stage === 'Muat Return' ? <CheckCircle size={18} color="var(--color-success)" /> : <FileText size={18} />}
                   <h3>{t.id}</h3>
                 </div>
-                <span className="lha-status">{t.stage || 'Baru'}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span className="lha-status" style={{ backgroundColor: getBadgeColor(t.stage) + '20', color: getBadgeColor(t.stage) }}>
+                    {t.stage || 'Baru'}
+                  </span>
+                  {(userRole === 'admin' || userRole === 'qc') && (
+                    <button 
+                      className="delete-lha-btn" 
+                      onClick={(e) => handleDeleteTransaction(e, t.id)}
+                      title="Hapus LHA"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  )}
+                </div>
               </div>
               <div className="lha-card-body">
                 <div className="info-row">

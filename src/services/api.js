@@ -183,5 +183,29 @@ export const api = {
       console.error("Delete User Error", error);
       throw error;
     }
+  },
+
+  deleteTransaction: async (id) => {
+    if (!API_URL || API_URL === 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL') {
+      console.warn("API_URL is not set. Mocking transaction deletion.");
+      return { success: true };
+    }
+
+    try {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8',
+        },
+        body: JSON.stringify({
+          action: 'deleteTransaction',
+          id
+        })
+      });
+      return await response.json();
+    } catch (error) {
+      console.error("Delete Transaction Error", error);
+      throw error;
+    }
   }
 };

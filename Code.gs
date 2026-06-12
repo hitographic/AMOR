@@ -39,6 +39,8 @@ function doPost(e) {
       return handleAddProgress(data);
     } else if (action == 'createTransaction') {
       return handleCreateTransaction(data);
+    } else if (action == 'deleteTransaction') {
+      return handleDeleteTransaction(data);
     } else if (action == 'addUser') {
       return handleAddUser(data);
     } else if (action == 'updateUser') {
@@ -214,4 +216,28 @@ function handleDeleteUser(data) {
     }
   }
   return ContentService.createTextOutput(JSON.stringify({error: "User not found"})).setMimeType(ContentService.MimeType.JSON);
+}
+
+function handleDeleteTransaction(data) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var transSheet = ss.getSheetByName("Transactions");
+  var progSheet = ss.getSheetByName("Progress");
+  
+  // Delete from Transactions
+  var transData = transSheet.getDataRange().getValues();
+  for (var i = transData.length - 1; i >= 1; i--) {
+    if (transData[i][0] == data.id) {
+      transSheet.deleteRow(i + 1);
+    }
+  }
+  
+  // Delete from Progress
+  var progData = progSheet.getDataRange().getValues();
+  for (var j = progData.length - 1; j >= 1; j--) {
+    if (progData[j][0] == data.id) {
+      progSheet.deleteRow(j + 1);
+    }
+  }
+  
+  return ContentService.createTextOutput(JSON.stringify({success: true})).setMimeType(ContentService.MimeType.JSON);
 }
