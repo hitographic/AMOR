@@ -37,6 +37,8 @@ function doPost(e) {
     
     if (action == 'addProgress') {
       return handleAddProgress(data);
+    } else if (action == 'createTransaction') {
+      return handleCreateTransaction(data);
     } else if (action == 'addUser') {
       return handleAddUser(data);
     } else if (action == 'updateUser') {
@@ -86,12 +88,13 @@ function handleGetTransactions() {
   for (var j = 1; j < progressData.length; j++) {
     var transId = progressData[j][0];
     var stage = progressData[j][1];
+    var user = progressData[j][2];
     var date = progressData[j][3];
     
     if (!historyMap[transId]) {
       historyMap[transId] = {};
     }
-    historyMap[transId][stage] = date; // This stores the latest date for each stage
+    historyMap[transId][stage] = { date: date, user: user };
   }
   
   var result = [];
@@ -128,6 +131,21 @@ function handleAddProgress(data) {
       break;
     }
   }
+  
+  return ContentService.createTextOutput(JSON.stringify({success: true})).setMimeType(ContentService.MimeType.JSON);
+}
+
+function handleCreateTransaction(data) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var dateNow = new Date().toISOString();
+  
+  // 1. Create row in Transactions sheet
+  var transSheet = ss.getSheetByName("Transactions");
+  transSheet.appendRow([data.id, data.item, "Pembuatan LHA Reject", dateNow]);
+  
+  // 2. Add log to Progress sheet
+  var progressSheet = ss.getSheetByName("Progress");
+  progressSheet.appendRow([data.id, "Pembuatan LHA Reject", data.inputBy, dateNow, "LHA Created"]);
   
   return ContentService.createTextOutput(JSON.stringify({success: true})).setMimeType(ContentService.MimeType.JSON);
 }

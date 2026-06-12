@@ -30,70 +30,147 @@
   gap: 1rem;
 }
 
-/* Table Styles */
-.table-wrapper {
-  overflow-x: auto;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--color-border);
+/* Timeline Styles */
+.detail-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.back-btn {
   background: white;
-  margin-top: 1rem;
-}
-
-.progress-table {
-  width: 100%;
-  border-collapse: collapse;
-  min-width: 1000px;
-}
-
-.progress-table th,
-.progress-table td {
-  padding: 1rem;
-  border-bottom: 1px solid var(--color-border);
-  text-align: left;
-  white-space: nowrap;
-}
-
-.progress-table th {
-  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
   color: var(--color-text);
-  font-weight: 600;
-  position: sticky;
-  top: 0;
-  z-index: 10;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s;
 }
 
-/* Make first column sticky */
-.progress-table .sticky-col {
-  position: sticky;
-  left: 0;
-  background: white;
-  z-index: 5;
-  border-right: 2px solid var(--color-border);
+.back-btn:hover {
+  background: var(--color-background);
+  color: var(--color-primary);
 }
 
-.progress-table th:first-child {
-  position: sticky;
-  left: 0;
-  z-index: 15;
-  border-right: 2px solid var(--color-border);
-}
-
-.progress-table tbody tr:hover td {
-  background: #f8fafc;
-}
-
-.time-cell {
-  color: var(--color-text-muted);
-  font-size: 0.875rem;
-}
-
-.no-data {
-  text-align: center;
-  color: var(--color-text-muted);
-  padding: 3rem;
-  background: white;
+.transaction-detail-box {
+  padding: 1rem 1.5rem;
   border-radius: var(--radius-md);
-  border: 1px solid var(--color-border);
+  margin-bottom: 1.5rem;
+  border-left: 4px solid var(--color-primary);
+}
+
+.transaction-detail-box h3 {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+.timeline-container {
+  padding: 2rem;
+  border-radius: var(--radius-lg);
+  background: white;
+}
+
+.vertical-timeline {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* The vertical line */
+.vertical-timeline::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 19px; /* align with center of marker */
+  width: 2px;
+  background-color: var(--color-border);
+  z-index: 1;
+}
+
+.timeline-item {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  position: relative;
+  z-index: 2;
+}
+
+.timeline-item:last-child {
+  margin-bottom: 0;
+}
+
+.timeline-marker {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: white;
+  border: 2px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  z-index: 3;
+}
+
+.timeline-item.completed .timeline-marker {
+  background: var(--color-success);
+  border-color: var(--color-success);
+}
+
+.empty-circle {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--color-border);
+}
+
+.timeline-content {
+  flex: 1;
+  padding-top: 0.5rem;
+}
+
+.timeline-stage {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.1rem;
+  color: var(--color-text);
+}
+
+.timeline-item.completed .timeline-stage {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.timeline-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+}
+
+.meta-time {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--color-info);
+  font-weight: 500;
+}
+
+.meta-user {
+  color: var(--color-text);
+}
+
+.timeline-meta.pending {
+  color: #a0aec0;
+  font-style: italic;
 }
 
 .stage-badge {

@@ -5,7 +5,6 @@ import { api } from '../services/api';
 import './InputProgress.css';
 
 const STAGES = [
-  'Pembuatan LHA Reject',
   'LHA Reject to PPIC',
   'Input SKR',
   'Harga dari Accounting',
@@ -16,7 +15,7 @@ const STAGES = [
 
 const ROLE_STAGES = {
   admin: STAGES,
-  qc: ['Pembuatan LHA Reject', 'LHA Reject to PPIC'],
+  qc: ['LHA Reject to PPIC'],
   ppic: ['Input SKR', 'Harga dari Accounting', 'Approval Supplier', 'Pembuatan PO'],
   wh: ['Muat Return']
 };
@@ -113,28 +112,18 @@ function InputProgress() {
         <form onSubmit={handleSubmit} className="standard-form">
           <div className="form-group">
             <label>ID Transaksi / LHA Number</label>
-            {stage === 'Pembuatan LHA Reject' ? (
-              <input
-                type="text"
-                placeholder="e.g. LHA-2023-001"
-                value={transactionId}
-                onChange={(e) => setTransactionId(e.target.value)}
-                required
-              />
-            ) : (
-              <select
-                value={transactionId}
-                onChange={(e) => setTransactionId(e.target.value)}
-                required
-              >
-                <option value="" disabled>
-                  {isLoadingLHAs ? 'Memuat daftar LHA...' : 'Pilih Nomor LHA yang sudah ada'}
-                </option>
-                {existingLHAs.map((id) => (
-                  <option key={id} value={id}>{id}</option>
-                ))}
-              </select>
-            )}
+            <select
+              value={transactionId}
+              onChange={(e) => setTransactionId(e.target.value)}
+              required
+            >
+              <option value="" disabled>
+                {isLoadingLHAs ? 'Memuat daftar LHA...' : 'Pilih Nomor LHA yang sudah ada'}
+              </option>
+              {existingLHAs.map((id) => (
+                <option key={id} value={id}>{id}</option>
+              ))}
+            </select>
           </div>
 
           <div className="form-group">

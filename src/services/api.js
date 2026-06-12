@@ -67,6 +67,32 @@ export const api = {
     }
   },
 
+  createTransaction: async (id, item, inputBy) => {
+    if (!API_URL || API_URL === 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL') {
+      console.warn("API_URL is not set. Mocking transaction creation.");
+      return { success: true };
+    }
+
+    try {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8',
+        },
+        body: JSON.stringify({
+          action: 'createTransaction',
+          id,
+          item,
+          inputBy
+        })
+      });
+      return await response.json();
+    } catch (error) {
+      console.error("Create Transaction Error", error);
+      throw error;
+    }
+  },
+
   getUsers: async () => {
     if (!API_URL || API_URL === 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL') {
       return []; // mock data if not connected
