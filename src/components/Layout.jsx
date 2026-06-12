@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { Home, PlusCircle, Search, LogOut, Users } from 'lucide-react';
 import './Layout.css';
+import headerLogo from '../logo/AMOR header.png';
 
 function Layout() {
   const navigate = useNavigate();
@@ -24,7 +25,7 @@ function Layout() {
     <div className="layout-container">
       <header className="top-header glass-panel">
         <div className="header-content">
-          <h1 className="app-title">AMOR</h1>
+          <img src={headerLogo} alt="AMOR Header" className="header-logo" />
           <button className="logout-btn" onClick={handleLogout}>
             <LogOut size={20} />
           </button>

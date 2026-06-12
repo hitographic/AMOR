@@ -21,10 +21,10 @@
   margin: 0 auto;
 }
 
-.app-title {
-  font-size: 1.25rem;
-  color: var(--color-primary);
-  margin-bottom: 0;
+.header-logo {
+  height: 28px; /* adjust based on logo aspect ratio */
+  width: auto;
+  object-fit: contain;
 }
 
 .logout-btn {

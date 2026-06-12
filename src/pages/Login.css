@@ -24,12 +24,14 @@
   font-size: 1rem;
   color: var(--color-text-muted);
   font-weight: 500;
+  margin-bottom: 0.5rem;
 }
 
-.login-header h1 {
-  font-size: 2rem;
-  color: var(--color-primary);
-  margin-top: -0.25rem;
+.login-logo {
+  height: 48px; /* adjust based on logo aspect ratio */
+  width: auto;
+  object-fit: contain;
+  margin-bottom: 0.5rem;
 }
 
 .login-header p {

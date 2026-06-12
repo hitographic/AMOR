@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import './Login.css';
+import loginLogo from '../logo/AMOR login.png';
 
 import { api } from '../services/api';
 
@@ -42,7 +43,7 @@ function Login() {
       <div className="login-card glass-panel">
         <div className="login-header">
           <h2>Welcome to</h2>
-          <h1>AMOR</h1>
+          <img src={loginLogo} alt="AMOR Login" className="login-logo" />
           <p>Aplikasi Monitoring Retur</p>
         </div>
 
