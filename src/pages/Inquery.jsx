@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Search, Loader2, ArrowLeft, CheckCircle2, Clock } from 'lucide-react';
+import { Search, Loader2, ArrowLeft, CheckCircle2, Clock, Filter, Download, FileText, FileSpreadsheet } from 'lucide-react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 import { api } from '../services/api';
 import './Inquery.css';
 
@@ -20,6 +23,10 @@ function Inquery() {
   const transactionId = searchParams.get('id');
 
   const [searchTerm, setSearchTerm] = useState('');
+  const [searchDate, setSearchDate] = useState('');
+  const [searchLha, setSearchLha] = useState('');
+  const [searchItem, setSearchItem] = useState('');
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const [transactions, setTransactions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -39,10 +46,34 @@ function Inquery() {
     fetchTransactions();
   }, []);
 
-  const filteredTransactions = transactions.filter(t => 
-    (t.id && t.id.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (t.item && t.item.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const filteredTransactions = transactions.filter(t => {
+    // Quick search
+    const matchQuick = searchTerm === '' || 
+      (t.id && t.id.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (t.item && t.item.toLowerCase().includes(searchTerm.toLowerCase()));
+
+    // Advanced search
+    const matchLha = searchLha === '' || (t.id && t.id.toLowerCase().includes(searchLha.toLowerCase()));
+    const matchItem = searchItem === '' || (t.item && t.item.toLowerCase().includes(searchItem.toLowerCase()));
+    
+    let matchDate = true;
+    if (searchDate) {
+      const lhaDateStr = t.history ? t.history['Pembuatan LHA Reject']?.date : null;
+      if (lhaDateStr) {
+        const lhaDate = new Date(lhaDateStr);
+        // adjust for local timezone matching by formatting YYYY-MM-DD manually
+        const year = lhaDate.getFullYear();
+        const month = String(lhaDate.getMonth() + 1).padStart(2, '0');
+        const day = String(lhaDate.getDate()).padStart(2, '0');
+        const localDateStr = `${year}-${month}-${day}`;
+        matchDate = localDateStr === searchDate;
+      } else {
+        matchDate = false;
+      }
+    }
+
+    return matchQuick && matchLha && matchItem && matchDate;
+  });
 
   const formatTime = (isoString) => {
     if (!isoString) return '-';
@@ -58,23 +89,103 @@ function Inquery() {
     }
   };
 
+  const exportExcel = () => {
+    const wsData = filteredTransactions.map(tx => {
+      const row = {
+        'Nomor LHA': tx.id,
+        'Item': tx.item
+      };
+      STAGES.forEach(s => {
+        row[s] = formatTime(tx.history ? tx.history[s]?.date : null);
+      });
+      return row;
+    });
+    const ws = XLSX.utils.json_to_sheet(wsData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Progress LHA");
+    XLSX.writeFile(wb, "Report_Progress_LHA.xlsx");
+  };
+
+  const exportPDF = () => {
+    const doc = new jsPDF('landscape');
+    doc.text("Laporan Progress LHA", 14, 15);
+    
+    const tableColumn = ["Nomor LHA", "Item", ...STAGES];
+    const tableRows = [];
+
+    filteredTransactions.forEach(tx => {
+      const rowData = [
+        tx.id,
+        tx.item,
+        ...STAGES.map(s => formatTime(tx.history ? tx.history[s]?.date : null))
+      ];
+      tableRows.push(rowData);
+    });
+
+    doc.autoTable({
+      head: [tableColumn],
+      body: tableRows,
+      startY: 20,
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [59, 130, 246] }
+    });
+
+    doc.save("Report_Progress_LHA.pdf");
+  };
+
   // If no specific transaction is selected, show the TABLE list view
   if (!transactionId) {
     return (
       <div className="inquery-container">
-        <div className="page-header">
-          <h2>Inquery Progress</h2>
-          <p>Lacak status retur barang secara keseluruhan</p>
+        <div className="page-header inquery-header">
+          <div>
+            <h2>Inquery Progress</h2>
+            <p>Lacak status retur barang secara keseluruhan</p>
+          </div>
+          <div className="export-actions">
+            <button className="btn-export excel" onClick={exportExcel}>
+              <FileSpreadsheet size={16} /> Excel
+            </button>
+            <button className="btn-export pdf" onClick={exportPDF}>
+              <FileText size={16} /> PDF
+            </button>
+          </div>
         </div>
 
-        <div className="search-bar glass-panel">
-          <Search size={18} color="var(--color-text-muted)" />
-          <input 
-            type="text" 
-            placeholder="Cari LHA Number atau Nama Item..." 
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+        <div className="search-section">
+          <div className="search-bar glass-panel">
+            <Search size={18} color="var(--color-text-muted)" />
+            <input 
+              type="text" 
+              placeholder="Cari Cepat (LHA/Item)..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <button 
+              className={`btn-toggle-adv ${showAdvanced ? 'active' : ''}`} 
+              onClick={() => setShowAdvanced(!showAdvanced)}
+              title="Advanced Search"
+            >
+              <Filter size={18} />
+            </button>
+          </div>
+          
+          {showAdvanced && (
+            <div className="advanced-search glass-panel">
+              <div className="form-group">
+                <label>Tanggal Pembuatan</label>
+                <input type="date" value={searchDate} onChange={e => setSearchDate(e.target.value)} />
+              </div>
+              <div className="form-group">
+                <label>Kode LHA</label>
+                <input type="text" placeholder="Masukkan Kode..." value={searchLha} onChange={e => setSearchLha(e.target.value)} />
+              </div>
+              <div className="form-group">
+                <label>Nama Item</label>
+                <input type="text" placeholder="Masukkan Item..." value={searchItem} onChange={e => setSearchItem(e.target.value)} />
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="transaction-list">
