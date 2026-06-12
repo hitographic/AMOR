@@ -40,11 +40,11 @@
 }
 
 .btn-export.excel {
-  background: var(--color-success);
+  background: var(--color-success-solid);
 }
 
 .btn-export.pdf {
-  background: var(--color-danger);
+  background: var(--color-danger-solid);
 }
 
 .advanced-search {

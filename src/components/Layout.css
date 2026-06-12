@@ -103,7 +103,7 @@
   position: absolute;
   top: 0;
   right: 0;
-  background: var(--color-danger);
+  background: var(--color-danger-solid);
   color: white;
   font-size: 0.65rem;
   font-weight: 700;

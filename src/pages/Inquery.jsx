@@ -3,7 +3,7 @@ import { Search, Loader2, ArrowLeft, CheckCircle2, Clock, Filter, Download, File
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 import { api } from '../services/api';
 import './Inquery.css';
 
@@ -122,7 +122,7 @@ function Inquery() {
       tableRows.push(rowData);
     });
 
-    doc.autoTable({
+    autoTable(doc, {
       head: [tableColumn],
       body: tableRows,
       startY: 20,
