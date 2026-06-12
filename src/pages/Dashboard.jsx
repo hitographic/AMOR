@@ -127,7 +127,7 @@ function Dashboard() {
       warningTxs.forEach((w, index) => {
         message += `${index + 1}. ${w.id} menunggu ${w.role.toUpperCase()} (${w.stage})\n`;
       });
-      message += `\nMohon segera diproses :)\n\nLink Input: https://hitographic.github.io/AMOR/#/input\n\ncc :\n`;
+      message += `\ncc:\n`;
 
       rolesNeeded.forEach(role => {
         const roleUsers = usersList.filter(u => u.role === role && u.phone);
@@ -138,6 +138,8 @@ function Dashboard() {
           message += `@${phone}\n`;
         });
       });
+
+      message += `\nLink Input: https://hitographic.github.io/AMOR/#/input\n\nMohon segera diproses :)\nTerima kasih`;
 
       const encodedMsg = encodeURIComponent(message);
       window.open(`https://wa.me/?text=${encodedMsg}`, '_blank');
@@ -226,7 +228,7 @@ function Dashboard() {
         message += `\n\n`;
       }
 
-      message += `Mohon segera diproses :)\n\nLink Input: https://hitographic.github.io/AMOR/#/input`;
+      message += `Link Input: https://hitographic.github.io/AMOR/#/input\n\nMohon segera diproses :)\nTerima kasih`;
 
       const encodedMsg = encodeURIComponent(message);
       window.open(`https://wa.me/?text=${encodedMsg}`, '_blank');
