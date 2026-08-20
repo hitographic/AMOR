@@ -48,6 +48,13 @@ function Dashboard() {
 
   const handleCreateLha = async (e) => {
     e.preventDefault();
+    
+    const duplicateExists = transactions.some(t => t.id === newLha.trim());
+    if (duplicateExists) {
+      alert('Nomor LHA sudah ada. Silakan gunakan nomor LHA yang berbeda.');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const res = await api.createTransaction(newLha, newItem, userName);
