@@ -1,7 +1,7 @@
 const TARGETS = {
   "Pembuatan LHA Reject": 0,
   "LHA Reject to PPIC": 3,
-  "Input SKR": 5,
+  "Pembuatan SKR": 5,
   "Harga dari Accounting": 3,
   "Approval Supplier": 5,
   "Pembuatan PO": 3,

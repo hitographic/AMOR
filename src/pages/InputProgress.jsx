@@ -6,7 +6,7 @@ import './InputProgress.css';
 
 const STAGES = [
   'LHA Reject to PPIC',
-  'Input SKR',
+  'Pembuatan SKR',
   'Harga dari Accounting',
   'Approval Supplier',
   'Pembuatan PO',
@@ -16,7 +16,7 @@ const STAGES = [
 const ROLE_STAGES = {
   admin: STAGES,
   qc: ['LHA Reject to PPIC'],
-  ppic: ['Input SKR', 'Harga dari Accounting', 'Approval Supplier', 'Pembuatan PO'],
+  ppic: ['Pembuatan SKR', 'Harga dari Accounting', 'Approval Supplier', 'Pembuatan PO'],
   wh: ['Muat Return']
 };
 

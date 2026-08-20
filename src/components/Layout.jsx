@@ -38,8 +38,8 @@ function Layout() {
 
       const STAGE_SLA = {
         'LHA Reject to PPIC': { prev: 'Pembuatan LHA Reject', days: 3, role: 'qc' },
-        'Input SKR': { prev: 'LHA Reject to PPIC', days: 5, role: 'ppic' },
-        'Harga dari Accounting': { prev: 'Input SKR', days: 3, role: 'ppic' },
+        'Pembuatan SKR': { prev: 'LHA Reject to PPIC', days: 5, role: 'ppic' },
+        'Harga dari Accounting': { prev: 'Pembuatan SKR', days: 3, role: 'ppic' },
         'Approval Supplier': { prev: 'Harga dari Accounting', days: 5, role: 'ppic' },
         'Pembuatan PO': { prev: 'Approval Supplier', days: 3, role: 'ppic' },
         'Muat Return': { prev: 'Pembuatan PO', days: 21, role: 'wh' }
@@ -48,7 +48,7 @@ function Layout() {
       const STAGES = [
         'Pembuatan LHA Reject',
         'LHA Reject to PPIC',
-        'Input SKR',
+        'Pembuatan SKR',
         'Harga dari Accounting',
         'Approval Supplier',
         'Pembuatan PO',
@@ -102,11 +102,11 @@ function Layout() {
         }
 
         // Action Ready Notifications
-        if (nextStage === 'Input SKR' && (role === 'ppic' || role === 'admin')) {
+        if (nextStage === 'Pembuatan SKR' && (role === 'ppic' || role === 'admin')) {
           notifs.push({
             id: t.id + '-ready-ppic',
             type: 'info',
-            message: `LHA ${t.id} menunggu Input SKR oleh PPIC.`
+            message: `LHA ${t.id} menunggu Pembuatan SKR oleh PPIC.`
           });
         }
 

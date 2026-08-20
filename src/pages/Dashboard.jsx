@@ -71,8 +71,8 @@ function Dashboard() {
     try {
       const STAGE_SLA = {
         'LHA Reject to PPIC': { prev: 'Pembuatan LHA Reject', days: 3, role: 'qc' },
-        'Input SKR': { prev: 'LHA Reject to PPIC', days: 5, role: 'ppic' },
-        'Harga dari Accounting': { prev: 'Input SKR', days: 3, role: 'ppic' },
+        'Pembuatan SKR': { prev: 'LHA Reject to PPIC', days: 5, role: 'ppic' },
+        'Harga dari Accounting': { prev: 'Pembuatan SKR', days: 3, role: 'ppic' },
         'Approval Supplier': { prev: 'Harga dari Accounting', days: 5, role: 'ppic' },
         'Pembuatan PO': { prev: 'Approval Supplier', days: 3, role: 'ppic' },
         'Muat Return': { prev: 'Pembuatan PO', days: 21, role: 'wh' }
@@ -81,7 +81,7 @@ function Dashboard() {
       const STAGES = [
         'Pembuatan LHA Reject',
         'LHA Reject to PPIC',
-        'Input SKR',
+        'Pembuatan SKR',
         'Harga dari Accounting',
         'Approval Supplier',
         'Pembuatan PO',
@@ -155,8 +155,8 @@ function Dashboard() {
     try {
       const STAGE_SLA = {
         'LHA Reject to PPIC': { prev: 'Pembuatan LHA Reject', days: 3, role: 'qc' },
-        'Input SKR': { prev: 'LHA Reject to PPIC', days: 5, role: 'ppic' },
-        'Harga dari Accounting': { prev: 'Input SKR', days: 3, role: 'ppic' },
+        'Pembuatan SKR': { prev: 'LHA Reject to PPIC', days: 5, role: 'ppic' },
+        'Harga dari Accounting': { prev: 'Pembuatan SKR', days: 3, role: 'ppic' },
         'Approval Supplier': { prev: 'Harga dari Accounting', days: 5, role: 'ppic' },
         'Pembuatan PO': { prev: 'Approval Supplier', days: 3, role: 'ppic' },
         'Muat Return': { prev: 'Pembuatan PO', days: 21, role: 'wh' }
@@ -165,7 +165,7 @@ function Dashboard() {
       const STAGES = [
         'Pembuatan LHA Reject',
         'LHA Reject to PPIC',
-        'Input SKR',
+        'Pembuatan SKR',
         'Harga dari Accounting',
         'Approval Supplier',
         'Pembuatan PO',
@@ -274,7 +274,7 @@ function Dashboard() {
       return currentStage === 'Pembuatan LHA Reject';
     }
     if (activeFilter === 'PENDING_PPIC') {
-      return ['LHA Reject to PPIC', 'Input SKR', 'Harga dari Accounting', 'Approval Supplier'].includes(currentStage);
+      return ['LHA Reject to PPIC', 'Pembuatan SKR', 'Harga dari Accounting', 'Approval Supplier'].includes(currentStage);
     }
     if (activeFilter === 'PENDING_WH') {
       return currentStage === 'Pembuatan PO';
@@ -295,7 +295,7 @@ function Dashboard() {
         pendingQC++;
       } else if ([
         'LHA Reject to PPIC',
-        'Input SKR',
+        'Pembuatan SKR',
         'Harga dari Accounting',
         'Approval Supplier'
       ].includes(currentStage)) {
@@ -316,7 +316,7 @@ function Dashboard() {
   const getBadgeColor = (stage) => {
     const s = stage || 'Pembuatan LHA Reject';
     if (['Pembuatan LHA Reject', 'LHA Reject to PPIC'].includes(s)) return 'var(--color-primary)'; // Biru
-    if (['Input SKR', 'Harga dari Accounting', 'Approval Supplier', 'Pembuatan PO'].includes(s)) return '#8b5cf6'; // Ungu
+    if (['Pembuatan SKR', 'Harga dari Accounting', 'Approval Supplier', 'Pembuatan PO'].includes(s)) return '#8b5cf6'; // Ungu
     if (s === 'Muat Return') return 'var(--color-success)'; // Hijau
     return 'var(--color-text-muted)';
   };

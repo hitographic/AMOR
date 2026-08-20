@@ -10,7 +10,7 @@ import './Inquery.css';
 const STAGES = [
   'Pembuatan LHA Reject',
   'LHA Reject to PPIC',
-  'Input SKR',
+  'Pembuatan SKR',
   'Harga dari Accounting',
   'Approval Supplier',
   'Pembuatan PO',
