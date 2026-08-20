@@ -11,8 +11,8 @@ const STAGES = [
   'Pembuatan LHA Reject',
   'LHA Reject to PPIC',
   'Pembuatan SKR',
-  'Harga dari Accounting',
   'Approval Supplier',
+  'Harga dari Accounting',
   'Pembuatan PO',
   'Muat Return'
 ];

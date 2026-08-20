@@ -39,9 +39,9 @@ function Layout() {
       const STAGE_SLA = {
         'LHA Reject to PPIC': { prev: 'Pembuatan LHA Reject', days: 3, role: 'qc' },
         'Pembuatan SKR': { prev: 'LHA Reject to PPIC', days: 5, role: 'ppic' },
-        'Harga dari Accounting': { prev: 'Pembuatan SKR', days: 3, role: 'ppic' },
-        'Approval Supplier': { prev: 'Harga dari Accounting', days: 5, role: 'ppic' },
-        'Pembuatan PO': { prev: 'Approval Supplier', days: 3, role: 'ppic' },
+        'Approval Supplier': { prev: 'Pembuatan SKR', days: 5, role: 'ac' },
+        'Harga dari Accounting': { prev: 'Approval Supplier', days: 3, role: 'ppic' },
+        'Pembuatan PO': { prev: 'Harga dari Accounting', days: 3, role: 'ppic' },
         'Muat Return': { prev: 'Pembuatan PO', days: 21, role: 'wh' }
       };
 
@@ -49,8 +49,8 @@ function Layout() {
         'Pembuatan LHA Reject',
         'LHA Reject to PPIC',
         'Pembuatan SKR',
-        'Harga dari Accounting',
         'Approval Supplier',
+        'Harga dari Accounting',
         'Pembuatan PO',
         'Muat Return'
       ];
@@ -107,6 +107,14 @@ function Layout() {
             id: t.id + '-ready-ppic',
             type: 'info',
             message: `LHA ${t.id} menunggu Pembuatan SKR oleh PPIC.`
+          });
+        }
+
+        if (nextStage === 'Approval Supplier' && (role === 'ac' || role === 'admin')) {
+          notifs.push({
+            id: t.id + '-ready-ac',
+            type: 'info',
+            message: `LHA ${t.id} menunggu Approval Supplier oleh Accounting.`
           });
         }
 
