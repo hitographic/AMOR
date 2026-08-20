@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Plus, X, Loader2, FileText, Clock, Box, ClipboardList, AlertCircle, CheckCircle, Trash2, MessageCircle } from 'lucide-react';
+import { Search, Plus, X, Loader2, FileText, Clock, Box, ClipboardList, AlertCircle, CheckCircle, CheckCircle2, Trash2, MessageCircle } from 'lucide-react';
 import { api } from '../services/api';
 import './Dashboard.css';
 
@@ -287,11 +287,14 @@ function Dashboard() {
     let pendingQC = 0;
     let pendingPPIC = 0;
     let pendingWH = 0;
+    let progresSelesai = 0;
 
     transactions.forEach(t => {
       const currentStage = t.stage || 'Pembuatan LHA Reject';
 
-      if (currentStage === 'Pembuatan LHA Reject') {
+      if (currentStage === 'Muat Return') {
+        progresSelesai++;
+      } else if (currentStage === 'Pembuatan LHA Reject') {
         pendingQC++;
       } else if ([
         'LHA Reject to PPIC',
@@ -309,7 +312,8 @@ function Dashboard() {
       total: transactions.length,
       pendingQC,
       pendingPPIC,
-      pendingWH
+      pendingWH,
+      progresSelesai
     };
   }, [transactions]);
 
@@ -399,6 +403,19 @@ function Dashboard() {
           <div className="stat-info">
             <h3>Pending WH</h3>
             <p>{stats.pendingWH}</p>
+          </div>
+        </div>
+
+        <div
+          className="stat-card glass-panel"
+          style={{ borderLeft: '4px solid #22c55e' }}
+        >
+          <div className="stat-icon" style={{ background: 'rgba(34, 197, 94, 0.1)', color: '#22c55e' }}>
+            <CheckCircle2 size={24} />
+          </div>
+          <div className="stat-info">
+            <h3>Progres Selesai</h3>
+            <p>{stats.progresSelesai}</p>
           </div>
         </div>
       </div>
