@@ -77,12 +77,12 @@ function Dashboard() {
   const handleBroadcastH1 = async () => {
     try {
       const STAGE_SLA = {
-        'LHA Reject to PPIC': { prev: 'Pembuatan LHA Reject', days: 3, role: 'qc' },
-        'Pembuatan SKR': { prev: 'LHA Reject to PPIC', days: 5, role: 'ppic' },
+        'LHA Reject to PPIC': { prev: 'Pembuatan LHA Reject', days: 2, role: 'qc' },
+        'Pembuatan SKR': { prev: 'LHA Reject to PPIC', days: 2, role: 'ppic' },
         'Approval Supplier': { prev: 'Pembuatan SKR', days: 5, role: 'ac' },
-        'Harga dari Accounting': { prev: 'Approval Supplier', days: 3, role: 'ppic' },
-        'Pembuatan PO': { prev: 'Harga dari Accounting', days: 3, role: 'ppic' },
-        'Muat Return': { prev: 'Pembuatan PO', days: 21, role: 'wh' }
+        'Harga dari Accounting': { prev: 'Approval Supplier', days: 5, role: 'ppic' },
+        'Pembuatan PO': { prev: 'Harga dari Accounting', days: 1, role: 'ppic' },
+        'Muat Return': { prev: 'Pembuatan PO', days: 6, role: 'wh' }
       };
 
       const STAGES = [
@@ -111,11 +111,11 @@ function Dashboard() {
             const prevDate = new Date(prevStageDateStr);
             const deadline = new Date(prevDate);
             deadline.setDate(deadline.getDate() + slaConfig.days);
-            const daysUntilDeadline = (deadline - now) / (1000 * 60 * 60 * 24);
+            const daysUntilDeadline = Math.ceil((deadline - now) / (1000 * 60 * 60 * 24));
 
-            // if it's <= 1 day, it means it's H-1 or already late
-            if (daysUntilDeadline <= 1) {
-              warningTxs.push({ id: t.id, stage: nextStage, role: slaConfig.role });
+            if (daysUntilDeadline <= 2) {
+              const hLabel = daysUntilDeadline <= 0 ? 'Terlambat' : `H-${daysUntilDeadline}`;
+              warningTxs.push({ id: t.id, stage: nextStage, role: slaConfig.role, hLabel });
               rolesNeeded.add(slaConfig.role);
             }
           }
@@ -132,7 +132,7 @@ function Dashboard() {
 
       let message = `*Notifikasi Sistem AMOR*\nTerdapat ${warningTxs.length} LHA yang mencapai H-1 SLA:\n`;
       warningTxs.forEach((w, index) => {
-        message += `${index + 1}. ${w.id} menunggu ${w.role.toUpperCase()} (${w.stage})\n`;
+        message += `${index + 1}. ${w.id} menunggu ${w.role.toUpperCase()} (${w.stage}) - ${w.hLabel}\n`;
       });
       message += `\ncc:\n`;
 
@@ -161,12 +161,12 @@ function Dashboard() {
   const handleBroadcastReady = async () => {
     try {
       const STAGE_SLA = {
-        'LHA Reject to PPIC': { prev: 'Pembuatan LHA Reject', days: 3, role: 'qc' },
-        'Pembuatan SKR': { prev: 'LHA Reject to PPIC', days: 5, role: 'ppic' },
+        'LHA Reject to PPIC': { prev: 'Pembuatan LHA Reject', days: 2, role: 'qc' },
+        'Pembuatan SKR': { prev: 'LHA Reject to PPIC', days: 2, role: 'ppic' },
         'Approval Supplier': { prev: 'Pembuatan SKR', days: 5, role: 'ac' },
-        'Harga dari Accounting': { prev: 'Approval Supplier', days: 3, role: 'ppic' },
-        'Pembuatan PO': { prev: 'Harga dari Accounting', days: 3, role: 'ppic' },
-        'Muat Return': { prev: 'Pembuatan PO', days: 21, role: 'wh' }
+        'Harga dari Accounting': { prev: 'Approval Supplier', days: 5, role: 'ppic' },
+        'Pembuatan PO': { prev: 'Harga dari Accounting', days: 1, role: 'ppic' },
+        'Muat Return': { prev: 'Pembuatan PO', days: 6, role: 'wh' }
       };
 
       const STAGES = [

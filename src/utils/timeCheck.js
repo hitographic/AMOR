@@ -1,11 +1,11 @@
 const TARGETS = {
   "Pembuatan LHA Reject": 0,
-  "LHA Reject to PPIC": 3,
-  "Pembuatan SKR": 5,
+  "LHA Reject to PPIC": 2,
+  "Pembuatan SKR": 2,
   "Approval Supplier": 5,
-  "Harga dari Accounting": 3,
-  "Pembuatan PO": 3,
-  "Muat Return": 21
+  "Harga dari Accounting": 5,
+  "Pembuatan PO": 1,
+  "Muat Return": 6
 };
 
 /**
