@@ -130,10 +130,24 @@ function Dashboard() {
       // Fetch users to get their phone numbers
       const usersList = await api.getUsers();
 
-      let message = `*Notifikasi Sistem AMOR*\nTerdapat ${warningTxs.length} LHA yang mencapai H-1 SLA:\n`;
-      warningTxs.forEach((w, index) => {
-        message += `${index + 1}. ${w.id} menunggu ${w.role.toUpperCase()} (${w.stage}) - ${w.hLabel}\n`;
+      const grouped = {};
+      warningTxs.forEach(w => {
+        if (!grouped[w.role]) grouped[w.role] = [];
+        grouped[w.role].push(w);
       });
+
+      const roleOrder = ['qc', 'ppic', 'wh', 'ac'];
+      let message = `*Notifikasi Sistem AMOR*\nTerdapat ${warningTxs.length} LHA yang mencapai H-1 SLA:\n`;
+
+      roleOrder.forEach(role => {
+        if (grouped[role] && grouped[role].length > 0) {
+          message += `\n*${role.toUpperCase()}:*\n`;
+          grouped[role].forEach((w, index) => {
+            message += `${index + 1}. ${w.id} menunggu ${role.toUpperCase()} (${w.stage}) - ${w.hLabel}\n`;
+          });
+        }
+      });
+
       message += `\ncc:\n`;
 
       rolesNeeded.forEach(role => {
