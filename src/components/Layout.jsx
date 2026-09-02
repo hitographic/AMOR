@@ -39,8 +39,8 @@ function Layout() {
       const STAGE_SLA = {
         'LHA Reject to PPIC': { prev: 'Pembuatan LHA Reject', days: 2, role: 'qc' },
         'Pembuatan SKR': { prev: 'LHA Reject to PPIC', days: 2, role: 'ppic' },
-        'Approval Supplier': { prev: 'Pembuatan SKR', days: 5, role: 'ac' },
-        'Harga dari Accounting': { prev: 'Approval Supplier', days: 5, role: 'ppic' },
+        'Approval Supplier': { prev: 'Pembuatan SKR', days: 5, role: 'ppic' },
+        'Harga dari Accounting': { prev: 'Approval Supplier', days: 5, role: 'ac' },
         'Pembuatan PO': { prev: 'Harga dari Accounting', days: 1, role: 'ppic' },
         'Muat Return': { prev: 'Pembuatan PO', days: 6, role: 'wh' }
       };

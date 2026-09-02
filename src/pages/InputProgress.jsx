@@ -16,8 +16,8 @@ const STAGES = [
 const ROLE_STAGES = {
   admin: STAGES,
   qc: ['LHA Reject to PPIC'],
-  ppic: ['Pembuatan SKR', 'Harga dari Accounting', 'Pembuatan PO'],
-  ac: ['Approval Supplier'],
+  ppic: ['Pembuatan SKR', 'Approval Supplier', 'Pembuatan PO'],
+  ac: ['Harga dari Accounting'],
   wh: ['Muat Return']
 };
 
@@ -60,8 +60,8 @@ function InputProgress() {
             // PPIC can only process if QC is done, but PPIC is not done (last ppic stage is Pembuatan PO)
             filteredData = data.filter(t => t.history && t.history['LHA Reject to PPIC'] && !t.history['Pembuatan PO']);
           } else if (currentRole === 'ac') {
-            // Accounting can only process if Pembuatan SKR is done, but Approval Supplier is not done
-            filteredData = data.filter(t => t.history && t.history['Pembuatan SKR'] && !t.history['Approval Supplier']);
+            // Accounting can only process if Approval Supplier is done, but Harga dari Accounting is not done
+            filteredData = data.filter(t => t.history && t.history['Approval Supplier'] && !t.history['Harga dari Accounting']);
           } else if (currentRole === 'wh') {
             // WH can only process if PPIC is done, but WH is not done
             filteredData = data.filter(t => t.history && t.history['Pembuatan PO'] && !t.history['Muat Return']);
