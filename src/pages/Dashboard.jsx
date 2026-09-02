@@ -295,7 +295,10 @@ function Dashboard() {
       return currentStage === 'Pembuatan LHA Reject';
     }
     if (activeFilter === 'PENDING_PPIC') {
-      return ['LHA Reject to PPIC', 'Pembuatan SKR', 'Approval Supplier', 'Harga dari Accounting'].includes(currentStage);
+      return ['LHA Reject to PPIC', 'Pembuatan SKR', 'Approval Supplier'].includes(currentStage);
+    }
+    if (activeFilter === 'PENDING_ACCT') {
+      return currentStage === 'Harga dari Accounting';
     }
     if (activeFilter === 'PENDING_WH') {
       return currentStage === 'Pembuatan PO';
@@ -307,6 +310,7 @@ function Dashboard() {
   const stats = useMemo(() => {
     let pendingQC = 0;
     let pendingPPIC = 0;
+    let pendingAcct = 0;
     let pendingWH = 0;
     let progresSelesai = 0;
 
@@ -320,10 +324,11 @@ function Dashboard() {
       } else if ([
         'LHA Reject to PPIC',
         'Pembuatan SKR',
-        'Approval Supplier',
-        'Harga dari Accounting'
+        'Approval Supplier'
       ].includes(currentStage)) {
         pendingPPIC++;
+      } else if (currentStage === 'Harga dari Accounting') {
+        pendingAcct++;
       } else if (currentStage === 'Pembuatan PO') {
         pendingWH++;
       }
@@ -333,6 +338,7 @@ function Dashboard() {
       total: transactions.length,
       pendingQC,
       pendingPPIC,
+      pendingAcct,
       pendingWH,
       progresSelesai
     };
@@ -410,6 +416,20 @@ function Dashboard() {
           <div className="stat-info">
             <h3>Pending PPIC</h3>
             <p>{stats.pendingPPIC}</p>
+          </div>
+        </div>
+
+        <div
+          className={`stat-card glass-panel clickable ${activeFilter === 'PENDING_ACCT' ? 'active-filter' : ''}`}
+          style={{ borderLeft: '4px solid #f59e0b' }}
+          onClick={() => setActiveFilter('PENDING_ACCT')}
+        >
+          <div className="stat-icon" style={{ background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' }}>
+            <AlertCircle size={24} />
+          </div>
+          <div className="stat-info">
+            <h3>Pending Acct</h3>
+            <p>{stats.pendingAcct}</p>
           </div>
         </div>
 
