@@ -266,6 +266,7 @@ function UserManagement() {
                 <option value="admin">Admin</option>
                 <option value="qc">QC RMFG</option>
                 <option value="ppic">PPIC</option>
+                <option value="ac">Accounting</option>
                 <option value="wh">Warehouse</option>
               </select>
             </div>
@@ -323,6 +324,7 @@ function UserManagement() {
                   <option value="admin">Admin</option>
                   <option value="qc">QC RMFG</option>
                   <option value="ppic">PPIC</option>
+                  <option value="ac">Accounting</option>
                   <option value="wh">Warehouse</option>
                 </select>
               </div>

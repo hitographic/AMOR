@@ -4,6 +4,48 @@ import { Search, Plus, X, Loader2, FileText, Clock, Box, ClipboardList, AlertCir
 import { api } from '../services/api';
 import './Dashboard.css';
 
+// Canonical ordered flow (must match InputProgress & Inquery)
+const FULL_STAGES = [
+  'Pembuatan LHA Reject',
+  'LHA Reject to PPIC',
+  'Pembuatan SKR',
+  'Approval Supplier',
+  'Harga dari Accounting',
+  'Pembuatan PO',
+  'Muat Return'
+];
+
+const normalizeStage = (s) => (s || '').toString().trim().toLowerCase();
+
+const isStageDone = (history, stage) => {
+  if (!history) return false;
+  const target = normalizeStage(stage);
+  return Object.keys(history).some((k) => normalizeStage(k) === target);
+};
+
+// Next pending stage of a transaction, derived from history when
+// available, otherwise inferred from the stored current stage.
+const getNextStage = (t) => {
+  if (t.history && Object.keys(t.history).length > 0) {
+    const next = FULL_STAGES.find((s) => !isStageDone(t.history, s));
+    return next || null; // null = fully completed
+  }
+  const idx = FULL_STAGES.findIndex((s) => normalizeStage(s) === normalizeStage(t.stage));
+  if (idx === -1) return 'LHA Reject to PPIC';
+  return FULL_STAGES[idx + 1] || null;
+};
+
+// Which role is currently waited on ("pending bucket")
+const getPendingBucket = (t) => {
+  const next = getNextStage(t);
+  if (!next) return 'SELESAI';
+  if (next === 'LHA Reject to PPIC') return 'QC';
+  if (['Pembuatan SKR', 'Approval Supplier', 'Pembuatan PO'].includes(next)) return 'PPIC';
+  if (next === 'Harga dari Accounting') return 'ACCT';
+  if (next === 'Muat Return') return 'WH';
+  return 'QC';
+};
+
 function Dashboard() {
   const navigate = useNavigate();
   const [transactions, setTransactions] = useState([]);
@@ -194,6 +236,7 @@ function Dashboard() {
       ];
 
       const pendingPPIC = [];
+      const pendingAcct = [];
       const pendingWH = [];
 
       transactions.forEach(t => {
@@ -204,11 +247,12 @@ function Dashboard() {
         const slaConfig = STAGE_SLA[nextStage];
         if (slaConfig) {
           if (slaConfig.role === 'ppic') pendingPPIC.push({ id: t.id, stage: nextStage });
+          if (slaConfig.role === 'ac') pendingAcct.push({ id: t.id, stage: nextStage });
           if (slaConfig.role === 'wh') pendingWH.push({ id: t.id, stage: nextStage });
         }
       });
 
-      if (pendingPPIC.length === 0 && pendingWH.length === 0) {
+      if (pendingPPIC.length === 0 && pendingAcct.length === 0 && pendingWH.length === 0) {
         alert("Tidak ada LHA yang sedang menunggu konfirmasi lanjutan.");
         return;
       }
@@ -241,6 +285,22 @@ function Dashboard() {
         message += `cc: `;
         const whUsers = usersList.filter(u => u.role === 'wh' && u.phone);
         whUsers.forEach(u => {
+          let phone = u.phone;
+          if (phone.startsWith('0')) phone = '62' + phone.substring(1);
+          if (!phone.startsWith('+')) phone = '+' + phone;
+          message += `@${phone} `;
+        });
+        message += `\n\n`;
+      }
+
+      if (pendingAcct.length > 0) {
+        message += `*Menunggu Accounting:*\n`;
+        pendingAcct.forEach((w, index) => {
+          message += `${index + 1}. ${w.id} (${w.stage})\n`;
+        });
+        message += `cc: `;
+        const acUsers = usersList.filter(u => u.role === 'ac' && u.phone);
+        acUsers.forEach(u => {
           let phone = u.phone;
           if (phone.startsWith('0')) phone = '62' + phone.substring(1);
           if (!phone.startsWith('+')) phone = '+' + phone;
@@ -289,24 +349,25 @@ function Dashboard() {
 
     if (!matchesSearch) return false;
 
-    // 2. Active filter
-    const currentStage = t.stage || 'Pembuatan LHA Reject';
+    // 2. Active filter (based on which role is waited on, not last done stage)
+    if (activeFilter === 'ALL') return true;
+    const bucket = getPendingBucket(t);
     if (activeFilter === 'PENDING_QC') {
-      return currentStage === 'Pembuatan LHA Reject';
+      return bucket === 'QC';
     }
     if (activeFilter === 'PENDING_PPIC') {
-      return ['LHA Reject to PPIC', 'Pembuatan SKR', 'Approval Supplier'].includes(currentStage);
+      return bucket === 'PPIC';
     }
     if (activeFilter === 'PENDING_ACCT') {
-      return currentStage === 'Harga dari Accounting';
+      return bucket === 'ACCT';
     }
     if (activeFilter === 'PENDING_WH') {
-      return currentStage === 'Pembuatan PO';
+      return bucket === 'WH';
     }
     return true; // ALL
   });
 
-  // Calculate Statistics
+  // Calculate Statistics (based on next pending stage per role)
   const stats = useMemo(() => {
     let pendingQC = 0;
     let pendingPPIC = 0;
@@ -315,21 +376,17 @@ function Dashboard() {
     let progresSelesai = 0;
 
     transactions.forEach(t => {
-      const currentStage = t.stage || 'Pembuatan LHA Reject';
+      const bucket = getPendingBucket(t);
 
-      if (currentStage === 'Muat Return') {
+      if (bucket === 'SELESAI') {
         progresSelesai++;
-      } else if (currentStage === 'Pembuatan LHA Reject') {
+      } else if (bucket === 'QC') {
         pendingQC++;
-      } else if ([
-        'LHA Reject to PPIC',
-        'Pembuatan SKR',
-        'Approval Supplier'
-      ].includes(currentStage)) {
+      } else if (bucket === 'PPIC') {
         pendingPPIC++;
-      } else if (currentStage === 'Harga dari Accounting') {
+      } else if (bucket === 'ACCT') {
         pendingAcct++;
-      } else if (currentStage === 'Pembuatan PO') {
+      } else if (bucket === 'WH') {
         pendingWH++;
       }
     });

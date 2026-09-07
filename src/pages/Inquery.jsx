@@ -17,6 +17,17 @@ const STAGES = [
   'Muat Return'
 ];
 
+// Tolerant history lookup: ignores trailing spaces / letter-case
+// differences that may exist in manually edited Sheet rows.
+const normalizeStage = (s) => (s || '').toString().trim().toLowerCase();
+
+const getHistoryEntry = (tx, stage) => {
+  if (!tx.history) return null;
+  const target = normalizeStage(stage);
+  const key = Object.keys(tx.history).find((k) => normalizeStage(k) === target);
+  return key ? tx.history[key] : null;
+};
+
 function Inquery() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -58,7 +69,7 @@ function Inquery() {
     
     let matchDate = true;
     if (searchDate) {
-      const lhaDateStr = t.history ? t.history['Pembuatan LHA Reject']?.date : null;
+      const lhaDateStr = getHistoryEntry(t, 'Pembuatan LHA Reject')?.date;
       if (lhaDateStr) {
         const lhaDate = new Date(lhaDateStr);
         // adjust for local timezone matching by formatting YYYY-MM-DD manually
@@ -75,8 +86,7 @@ function Inquery() {
     return matchQuick && matchLha && matchItem && matchDate;
   });
 
-  const formatTime = (isoString) => {
-    if (!isoString) return '-';
+  const formatTime = (isoString) => {    if (!isoString) return '-';
     try {
       const date = new Date(isoString);
       if (isNaN(date.getTime())) return '-';
@@ -96,7 +106,7 @@ function Inquery() {
         'Item': tx.item
       };
       STAGES.forEach(s => {
-        row[s] = formatTime(tx.history ? tx.history[s]?.date : null);
+        row[s] = formatTime(getHistoryEntry(tx, s)?.date);
       });
       return row;
     });
@@ -117,7 +127,7 @@ function Inquery() {
       const rowData = [
         tx.id,
         tx.item,
-        ...STAGES.map(s => formatTime(tx.history ? tx.history[s]?.date : null))
+        ...STAGES.map(s => formatTime(getHistoryEntry(tx, s)?.date))
       ];
       tableRows.push(rowData);
     });
@@ -221,7 +231,7 @@ function Inquery() {
                       <td>{tx.item}</td>
                       {STAGES.map(s => (
                         <td key={s} className="time-cell">
-                          {formatTime(tx.history ? tx.history[s]?.date : null)}
+                          {formatTime(getHistoryEntry(tx, s)?.date)}
                         </td>
                       ))}
                     </tr>
@@ -265,7 +275,7 @@ function Inquery() {
         ) : (
           <div className="vertical-timeline">
             {STAGES.map((stage, index) => {
-              const historyData = selectedTx.history ? selectedTx.history[stage] : null;
+              const historyData = getHistoryEntry(selectedTx, stage);
               const isCompleted = !!historyData;
               // Determine if this is the current active stage
               // It's the active stage if it's completed and the NEXT stage is NOT completed.

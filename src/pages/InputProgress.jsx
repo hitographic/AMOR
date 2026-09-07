@@ -13,6 +13,7 @@ const STAGES = [
   'Muat Return'
 ];
 
+// Ordered actionable stages + which role owns each of them.
 const ROLE_STAGES = {
   admin: STAGES,
   qc: ['LHA Reject to PPIC'],
@@ -20,6 +21,21 @@ const ROLE_STAGES = {
   ac: ['Harga dari Accounting'],
   wh: ['Muat Return']
 };
+
+// Normalize stage names so minor differences in the Sheet
+// (trailing spaces / letter case) don't break the flow.
+const normalizeStage = (s) => (s || '').toString().trim().toLowerCase();
+
+const isStageDone = (history, stage) => {
+  if (!history) return false;
+  const target = normalizeStage(stage);
+  return Object.keys(history).some((k) => normalizeStage(k) === target);
+};
+
+// First actionable stage (of STAGES) that has no history entry yet.
+// Returns null when every stage is completed.
+const getNextActionable = (history) =>
+  STAGES.find((s) => !isStageDone(history, s)) || null;
 
 function InputProgress() {
   const [transactionId, setTransactionId] = useState('');
@@ -33,39 +49,30 @@ function InputProgress() {
   const [isLoadingLHAs, setIsLoadingLHAs] = useState(true);
 
   useEffect(() => {
-    let currentRole = 'admin';
     const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      const parsed = JSON.parse(storedUser);
-      currentRole = parsed.role || 'admin';
-      setUserRole(currentRole);
-      
-      // Auto-select first available stage based on role if default is not available
-      const availableStages = ROLE_STAGES[currentRole] || STAGES;
-      if (!availableStages.includes(stage)) {
-        setStage(availableStages[0] || '');
-      }
+    const currentRole = storedUser ? (JSON.parse(storedUser).role || 'admin') : 'admin';
+    setUserRole(currentRole);
+
+    // Auto-select first available stage based on role if default is not available
+    const availableStages = ROLE_STAGES[currentRole] || STAGES;
+    if (!availableStages.includes(stage)) {
+      setStage(availableStages[0] || '');
     }
 
     const fetchLHAs = async () => {
       try {
         const data = await api.getTransactions();
         if (Array.isArray(data)) {
-          let filteredData = data;
-          
-          if (currentRole === 'qc') {
-            // QC can only process if it hasn't passed QC's final stage
-            filteredData = data.filter(t => !t.history || !t.history['LHA Reject to PPIC']);
-          } else if (currentRole === 'ppic') {
-            // PPIC can only process if QC is done, but PPIC is not done (last ppic stage is Pembuatan PO)
-            filteredData = data.filter(t => t.history && t.history['LHA Reject to PPIC'] && !t.history['Pembuatan PO']);
-          } else if (currentRole === 'ac') {
-            // Accounting can only process if Approval Supplier is done, but Harga dari Accounting is not done
-            filteredData = data.filter(t => t.history && t.history['Approval Supplier'] && !t.history['Harga dari Accounting']);
-          } else if (currentRole === 'wh') {
-            // WH can only process if PPIC is done, but WH is not done
-            filteredData = data.filter(t => t.history && t.history['Pembuatan PO'] && !t.history['Muat Return']);
-          }
+          // Only list transactions whose NEXT pending stage belongs to
+          // the current role. This guarantees every LHA in the dropdown
+          // has an actionable "Tahapan Progres Selanjutnya" (fixes WH
+          // seeing an LHA but getting "Tidak ada tahapan tersedia").
+          const filteredData = data.filter((t) => {
+            const next = getNextActionable(t.history);
+            if (!next) return false; // already fully completed
+            if (currentRole === 'admin') return true;
+            return (ROLE_STAGES[currentRole] || STAGES).includes(next);
+          });
 
           // Store full objects instead of just IDs so we can check history later
           setExistingLHAs(filteredData);
@@ -77,14 +84,15 @@ function InputProgress() {
       }
     };
     fetchLHAs();
-  }, [stage]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Find the currently selected transaction object
   const selectedTx = existingLHAs.find(t => t.id === transactionId);
 
-  // Determine the next stage in the sequence
-  const nextStageToComplete = selectedTx 
-    ? STAGES.find(s => !selectedTx.history || !selectedTx.history[s])
+  // Determine the next stage in the sequence (normalized lookup)
+  const nextStageToComplete = selectedTx
+    ? getNextActionable(selectedTx.history)
     : null;
 
   // Auto-select the next stage when transaction changes
