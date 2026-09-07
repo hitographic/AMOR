@@ -37,6 +37,9 @@ const getNextStage = (t) => {
 
 // Which role is currently waited on ("pending bucket")
 const getPendingBucket = (t) => {
+  // Completed is authoritative from the stored current stage too,
+  // in case the Progress log row is missing/stale.
+  if (normalizeStage(t.stage) === normalizeStage('Muat Return')) return 'SELESAI';
   const next = getNextStage(t);
   if (!next) return 'SELESAI';
   if (next === 'LHA Reject to PPIC') return 'QC';
@@ -364,6 +367,9 @@ function Dashboard() {
     if (activeFilter === 'PENDING_WH') {
       return bucket === 'WH';
     }
+    if (activeFilter === 'SELESAI') {
+      return bucket === 'SELESAI';
+    }
     return true; // ALL
   });
 
@@ -505,8 +511,9 @@ function Dashboard() {
         </div>
 
         <div
-          className="stat-card glass-panel"
+          className={`stat-card glass-panel clickable ${activeFilter === 'SELESAI' ? 'active-filter' : ''}`}
           style={{ borderLeft: '4px solid #22c55e' }}
+          onClick={() => setActiveFilter('SELESAI')}
         >
           <div className="stat-icon" style={{ background: 'rgba(34, 197, 94, 0.1)', color: '#22c55e' }}>
             <CheckCircle2 size={24} />
@@ -543,12 +550,12 @@ function Dashboard() {
           filteredTransactions.map(t => (
             <div
               key={t.id}
-              className={`lha-card glass-panel ${t.stage === 'Muat Return' ? 'completed-card' : ''}`}
+              className={`lha-card glass-panel ${getPendingBucket(t) === 'SELESAI' ? 'completed-card' : ''}`}
               onClick={() => navigate(`/inquery?id=${encodeURIComponent(t.id)}`)}
             >
               <div className="lha-card-header">
                 <div className="lha-id">
-                  {t.stage === 'Muat Return' ? <CheckCircle size={18} color="var(--color-success)" /> : <FileText size={18} />}
+                  {getPendingBucket(t) === 'SELESAI' ? <CheckCircle size={18} color="var(--color-success)" /> : <FileText size={18} />}
                   <h3>{t.id}</h3>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
