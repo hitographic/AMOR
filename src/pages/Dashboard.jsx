@@ -423,12 +423,10 @@ function Dashboard() {
           <p>Pantau semua proses retur</p>
         </div>
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-          {(userRole === 'admin' || userRole === 'qc') && (
-            <button className="add-lha-btn" onClick={() => setIsBroadcastModalOpen(true)} style={{ background: '#25D366' }} title="Kirim Notif via WhatsApp">
-              <MessageCircle size={20} />
-              <span>Broadcast WA</span>
-            </button>
-          )}
+          <button className="add-lha-btn" onClick={() => setIsBroadcastModalOpen(true)} style={{ background: '#25D366' }} title="Kirim Notif via WhatsApp">
+            <MessageCircle size={20} />
+            <span>Broadcast WA</span>
+          </button>
           {(userRole === 'admin' || userRole === 'qc') && (
             <button className="add-lha-btn" onClick={() => setIsModalOpen(true)}>
               <Plus size={20} />
