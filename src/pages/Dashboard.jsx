@@ -65,6 +65,7 @@ function Dashboard() {
   const [newLha, setNewLha] = useState('');
   const [newItem, setNewItem] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loadError, setLoadError] = useState('');
 
   // Cache daftar users (nomor HP untuk cc) agar broadcast instan.
   // api.getUsers() ke Google Apps Script bisa 10-60 detik (cold start),
@@ -132,6 +133,8 @@ function Dashboard() {
   }, []);
 
   const fetchTransactions = async () => {
+    setIsLoading(true);
+    setLoadError('');
     try {
       const data = await api.getTransactions();
       // data might not be an array if there's an error
@@ -142,6 +145,8 @@ function Dashboard() {
       }
     } catch (error) {
       console.error(error);
+      setTransactions([]);
+      setLoadError(error?.message || 'Gagal memuat data dari backend.');
     } finally {
       setIsLoading(false);
     }
@@ -621,6 +626,19 @@ function Dashboard() {
           onChange={(e) => setSearchTerm(e.target.value)}
         />
       </div>
+
+      {loadError && !isLoading && (
+        <div className="notification warning" style={{ marginBottom: '1rem' }}>
+          <AlertCircle size={18} />
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 600 }}>Backend tidak bisa dihubungi</div>
+            <div style={{ fontSize: '0.8rem', opacity: 0.85 }}>{loadError}</div>
+          </div>
+          <button type="button" className="submit-btn" style={{ width: 'auto', padding: '0.5rem 1rem' }} onClick={fetchTransactions}>
+            Coba lagi
+          </button>
+        </div>
+      )}
 
       <div className="lha-grid">
         {isLoading ? (

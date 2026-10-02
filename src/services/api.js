@@ -1,11 +1,56 @@
 // This URL will be replaced with the actual Google Apps Script Web App URL later
-const API_URL = 'https://script.google.com/macros/s/AKfycbxOhC--2gllnQ_nyzEI7epfdtHB1EYTPmCWBW6_8Eb9VuGu0N420yGVQSFSyWghsWYb4A/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbz9_3RPLzV0zDdl_X0MOq21fAc7UtpfIHgTho2_8571FrVqln9APpbwe0ldv-5zC2wHWg/exec';
 
 /**
  * Utility to fetch data from Google Apps Script
  * Note: GAS uses CORS, so we often use POST with text/plain or GET
  * For this mock, we just use a generic fetch wrapper
  */
+
+// Batas waktu request agar tidak gantung 1 menit saat backend mati/lambat (GAS cold start / deployment 404)
+const REQUEST_TIMEOUT_MS = 15000;
+
+const fetchWithTimeout = async (url, options = {}, timeoutMs = REQUEST_TIMEOUT_MS) => {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+};
+
+// Baca JSON dengan pesan error yang jelas kalau GAS mengembalikan halaman HTML (deployment 404 / akses ditutup)
+const readJson = async (response, label) => {
+  const contentType = response.headers.get('content-type') || '';
+  if (!response.ok) {
+    const body = await response.text().catch(() => '');
+    if (body.trimStart().startsWith('<')) {
+      throw new Error(
+        `${label} gagal (HTTP ${response.status}): backend Google Apps Script mengembalikan halaman HTML, bukan JSON. ` +
+        `Penyebab umum: deployment Web App sudah tidak valid / belum di-deploy sebagai versi baru dengan akses "Anyone".`
+      );
+    }
+    throw new Error(`${label} gagal (HTTP ${response.status})`);
+  }
+  if (!contentType.includes('json')) {
+    const body = await response.text().catch(() => '');
+    if (body.trimStart().startsWith('<')) {
+      throw new Error(
+        `${label} gagal: backend mengembalikan halaman HTML, bukan JSON. ` +
+        `Redeploy Apps Script (New version, Execute as Me, Who has access Anyone) lalu update API_URL.`
+      );
+    }
+  }
+  return response.json();
+};
+
+const timedError = (error, label) => {
+  if (error?.name === 'AbortError') {
+    throw new Error(`${label} timeout (> ${REQUEST_TIMEOUT_MS / 1000} dtk): backend tidak merespons. Cek koneksi / deployment GAS.`);
+  }
+  throw error;
+};
 
 export const api = {
   login: async (nik, password) => {
@@ -17,11 +62,11 @@ export const api = {
 
     // Real implementation
     try {
-      const response = await fetch(`${API_URL}?action=login&nik=${nik}&password=${password}`);
-      return await response.json();
+      const response = await fetchWithTimeout(`${API_URL}?action=login&nik=${nik}&password=${password}`);
+      return await readJson(response, 'Login');
     } catch (error) {
       console.error("Login Error", error);
-      throw error;
+      return timedError(error, 'Login');
     }
   },
 
@@ -31,11 +76,11 @@ export const api = {
     }
 
     try {
-      const response = await fetch(`${API_URL}?action=getTransactions`);
-      return await response.json();
+      const response = await fetchWithTimeout(`${API_URL}?action=getTransactions`);
+      return await readJson(response, 'Ambil transaksi');
     } catch (error) {
       console.error("Fetch Error", error);
-      throw error;
+      return timedError(error, 'Ambil transaksi');
     }
   },
 
@@ -47,7 +92,7 @@ export const api = {
 
     try {
       // For GAS POST, often we need to send form data or text/plain
-      const response = await fetch(API_URL, {
+      const response = await fetchWithTimeout(API_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'text/plain;charset=utf-8',
@@ -60,10 +105,10 @@ export const api = {
           inputBy
         })
       });
-      return await response.json();
+      return await readJson(response, 'Simpan progress');
     } catch (error) {
       console.error("Submit Error", error);
-      throw error;
+      return timedError(error, 'Simpan progress');
     }
   },
 
@@ -74,7 +119,7 @@ export const api = {
     }
 
     try {
-      const response = await fetch(API_URL, {
+      const response = await fetchWithTimeout(API_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'text/plain;charset=utf-8',
@@ -86,10 +131,10 @@ export const api = {
           inputBy
         })
       });
-      return await response.json();
+      return await readJson(response, 'Buat transaksi');
     } catch (error) {
       console.error("Create Transaction Error", error);
-      throw error;
+      return timedError(error, 'Buat transaksi');
     }
   },
 
@@ -99,11 +144,11 @@ export const api = {
     }
 
     try {
-      const response = await fetch(`${API_URL}?action=getUsers`);
-      return await response.json();
+      const response = await fetchWithTimeout(`${API_URL}?action=getUsers`);
+      return await readJson(response, 'Ambil users');
     } catch (error) {
       console.error("Get Users Error", error);
-      throw error;
+      return timedError(error, 'Ambil users');
     }
   },
 
@@ -114,7 +159,7 @@ export const api = {
     }
 
     try {
-      const response = await fetch(API_URL, {
+      const response = await fetchWithTimeout(API_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'text/plain;charset=utf-8',
@@ -127,10 +172,10 @@ export const api = {
           name
         })
       });
-      return await response.json();
+      return await readJson(response, 'Tambah user');
     } catch (error) {
       console.error("Add User Error", error);
-      throw error;
+      return timedError(error, 'Tambah user');
     }
   },
 
@@ -141,7 +186,7 @@ export const api = {
     }
 
     try {
-      const response = await fetch(API_URL, {
+      const response = await fetchWithTimeout(API_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'text/plain;charset=utf-8',
@@ -154,10 +199,10 @@ export const api = {
           name
         })
       });
-      return await response.json();
+      return await readJson(response, 'Update user');
     } catch (error) {
       console.error("Update User Error", error);
-      throw error;
+      return timedError(error, 'Update user');
     }
   },
 
@@ -168,7 +213,7 @@ export const api = {
     }
 
     try {
-      const response = await fetch(API_URL, {
+      const response = await fetchWithTimeout(API_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'text/plain;charset=utf-8',
@@ -178,10 +223,10 @@ export const api = {
           nik
         })
       });
-      return await response.json();
+      return await readJson(response, 'Hapus user');
     } catch (error) {
       console.error("Delete User Error", error);
-      throw error;
+      return timedError(error, 'Hapus user');
     }
   },
 
@@ -192,7 +237,7 @@ export const api = {
     }
 
     try {
-      const response = await fetch(API_URL, {
+      const response = await fetchWithTimeout(API_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'text/plain;charset=utf-8',
@@ -202,10 +247,10 @@ export const api = {
           id
         })
       });
-      return await response.json();
+      return await readJson(response, 'Hapus transaksi');
     } catch (error) {
       console.error("Delete Transaction Error", error);
-      throw error;
+      return timedError(error, 'Hapus transaksi');
     }
   }
 };
