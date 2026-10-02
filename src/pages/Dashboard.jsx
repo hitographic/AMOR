@@ -61,6 +61,7 @@ function Dashboard() {
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isBroadcastModalOpen, setIsBroadcastModalOpen] = useState(false);
+  const [isBroadcasting, setIsBroadcasting] = useState(false);
   const [newLha, setNewLha] = useState('');
   const [newItem, setNewItem] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -120,6 +121,12 @@ function Dashboard() {
   };
 
   const handleBroadcastH1 = async () => {
+    // PENTING: buka tab baru secara sinkron di dalam user-gesture
+    // agar tidak diblokir popup-blocker browser (khususnya Chrome mobile).
+    // await api.getUsers() setelah ini akan memutus user-gesture,
+    // jadi window.open harus dipanggil duluan.
+    const waWin = window.open('', '_blank');
+    setIsBroadcasting(true);
     try {
       const STAGE_SLA = {
         'LHA Reject to PPIC': { prev: 'Pembuatan LHA Reject', days: 2, role: 'qc' },
@@ -168,12 +175,18 @@ function Dashboard() {
       });
 
       if (warningTxs.length === 0) {
+        if (waWin) waWin.close();
         alert("Tidak ada LHA yang mendekati batas waktu (H-1 SLA).");
         return;
       }
 
-      // Fetch users to get their phone numbers
-      const usersList = await api.getUsers();
+      // Fetch users to get their phone numbers (boleh gagal, tetap lanjut tanpa cc)
+      let usersList = [];
+      try {
+        usersList = await api.getUsers() || [];
+      } catch (e) {
+        console.warn('getUsers gagal, lanjut tanpa cc:', e);
+      }
 
       const grouped = {};
       warningTxs.forEach(w => {
@@ -196,7 +209,7 @@ function Dashboard() {
       message += `\ncc:\n`;
 
       rolesNeeded.forEach(role => {
-        const roleUsers = usersList.filter(u => u.role === role && u.phone);
+        const roleUsers = (usersList || []).filter(u => u.role === role && u.phone);
         roleUsers.forEach(u => {
           let phone = u.phone;
           if (phone.startsWith('0')) phone = '62' + phone.substring(1);
@@ -208,16 +221,27 @@ function Dashboard() {
       message += `\nLink Input: https://hitographic.github.io/AMOR/#/input\n\nMohon segera diproses :)\nTerima kasih`;
 
       const encodedMsg = encodeURIComponent(message);
-      window.open(`https://wa.me/?text=${encodedMsg}`, '_blank');
+      const waUrl = `https://wa.me/?text=${encodedMsg}`;
+      if (waWin) {
+        waWin.location.href = waUrl;
+      } else {
+        // Fallback kalau popup tetap diblokir: buka di tab yang sama
+        window.location.href = waUrl;
+      }
       setIsBroadcastModalOpen(false);
 
     } catch (error) {
       console.error(error);
+      if (waWin) waWin.close();
       alert("Gagal memproses Broadcast WA.");
+    } finally {
+      setIsBroadcasting(false);
     }
   };
 
   const handleBroadcastReady = async () => {
+    const waWin = window.open('', '_blank');
+    setIsBroadcasting(true);
     try {
       const STAGE_SLA = {
         'LHA Reject to PPIC': { prev: 'Pembuatan LHA Reject', days: 2, role: 'qc' },
@@ -238,6 +262,7 @@ function Dashboard() {
         'Muat Return'
       ];
 
+      const pendingQC = [];
       const pendingPPIC = [];
       const pendingAcct = [];
       const pendingWH = [];
@@ -249,35 +274,52 @@ function Dashboard() {
 
         const slaConfig = STAGE_SLA[nextStage];
         if (slaConfig) {
+          if (slaConfig.role === 'qc') pendingQC.push({ id: t.id, stage: nextStage });
           if (slaConfig.role === 'ppic') pendingPPIC.push({ id: t.id, stage: nextStage });
           if (slaConfig.role === 'ac') pendingAcct.push({ id: t.id, stage: nextStage });
           if (slaConfig.role === 'wh') pendingWH.push({ id: t.id, stage: nextStage });
         }
       });
 
-      if (pendingPPIC.length === 0 && pendingAcct.length === 0 && pendingWH.length === 0) {
+      if (pendingQC.length === 0 && pendingPPIC.length === 0 && pendingAcct.length === 0 && pendingWH.length === 0) {
+        if (waWin) waWin.close();
         alert("Tidak ada LHA yang sedang menunggu konfirmasi lanjutan.");
         return;
       }
 
-      const usersList = await api.getUsers();
+      let usersList = [];
+      try {
+        usersList = await api.getUsers() || [];
+      } catch (e) {
+        console.warn('getUsers gagal, lanjut tanpa cc:', e);
+      }
+
+      const formatPhones = (role) => {
+        const roleUsers = (usersList || []).filter(u => u.role === role && u.phone);
+        return roleUsers.map(u => {
+          let phone = u.phone;
+          if (phone.startsWith('0')) phone = '62' + phone.substring(1);
+          if (!phone.startsWith('+')) phone = '+' + phone;
+          return `@${phone}`;
+        }).join(' ');
+      };
 
       let message = `*Notifikasi Sistem AMOR*\nTerdapat LHA yang menunggu proses lanjutan:\n\n`;
+
+      if (pendingQC.length > 0) {
+        message += `*Menunggu QC:*\n`;
+        pendingQC.forEach((w, index) => {
+          message += `${index + 1}. ${w.id} (${w.stage})\n`;
+        });
+        message += `cc: ${formatPhones('qc')}\n\n`;
+      }
 
       if (pendingPPIC.length > 0) {
         message += `*Menunggu PPIC:*\n`;
         pendingPPIC.forEach((w, index) => {
           message += `${index + 1}. ${w.id} (${w.stage})\n`;
         });
-        message += `cc: `;
-        const ppicUsers = usersList.filter(u => u.role === 'ppic' && u.phone);
-        ppicUsers.forEach(u => {
-          let phone = u.phone;
-          if (phone.startsWith('0')) phone = '62' + phone.substring(1);
-          if (!phone.startsWith('+')) phone = '+' + phone;
-          message += `@${phone} `;
-        });
-        message += `\n\n`;
+        message += `cc: ${formatPhones('ppic')}\n\n`;
       }
 
       if (pendingWH.length > 0) {
@@ -285,15 +327,7 @@ function Dashboard() {
         pendingWH.forEach((w, index) => {
           message += `${index + 1}. ${w.id} (${w.stage})\n`;
         });
-        message += `cc: `;
-        const whUsers = usersList.filter(u => u.role === 'wh' && u.phone);
-        whUsers.forEach(u => {
-          let phone = u.phone;
-          if (phone.startsWith('0')) phone = '62' + phone.substring(1);
-          if (!phone.startsWith('+')) phone = '+' + phone;
-          message += `@${phone} `;
-        });
-        message += `\n\n`;
+        message += `cc: ${formatPhones('wh')}\n\n`;
       }
 
       if (pendingAcct.length > 0) {
@@ -301,26 +335,26 @@ function Dashboard() {
         pendingAcct.forEach((w, index) => {
           message += `${index + 1}. ${w.id} (${w.stage})\n`;
         });
-        message += `cc: `;
-        const acUsers = usersList.filter(u => u.role === 'ac' && u.phone);
-        acUsers.forEach(u => {
-          let phone = u.phone;
-          if (phone.startsWith('0')) phone = '62' + phone.substring(1);
-          if (!phone.startsWith('+')) phone = '+' + phone;
-          message += `@${phone} `;
-        });
-        message += `\n\n`;
+        message += `cc: ${formatPhones('ac')}\n\n`;
       }
 
       message += `Link Input: https://hitographic.github.io/AMOR/#/input\n\nMohon segera diproses :)\nTerima kasih`;
 
       const encodedMsg = encodeURIComponent(message);
-      window.open(`https://wa.me/?text=${encodedMsg}`, '_blank');
+      const waUrl = `https://wa.me/?text=${encodedMsg}`;
+      if (waWin) {
+        waWin.location.href = waUrl;
+      } else {
+        window.location.href = waUrl;
+      }
       setIsBroadcastModalOpen(false);
 
     } catch (error) {
       console.error(error);
+      if (waWin) waWin.close();
       alert("Gagal memproses Broadcast WA.");
+    } finally {
+      setIsBroadcasting(false);
     }
   };
 
@@ -622,28 +656,32 @@ function Dashboard() {
       )}
 
       {isBroadcastModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-content glass-panel" style={{ maxWidth: '400px' }}>
+        <div className="modal-overlay" onClick={() => !isBroadcasting && setIsBroadcastModalOpen(false)}>
+          <div className="modal-content glass-panel" style={{ maxWidth: '400px' }} onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>Pilih Jenis Broadcast WA</h3>
-              <button className="close-btn" onClick={() => setIsBroadcastModalOpen(false)}><X size={20} /></button>
+              <button type="button" className="close-btn" onClick={() => setIsBroadcastModalOpen(false)} disabled={isBroadcasting}><X size={20} /></button>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1rem' }}>
               <button
+                type="button"
                 onClick={handleBroadcastH1}
+                disabled={isBroadcasting}
                 className="submit-btn"
-                style={{ background: 'var(--color-warning)', color: 'var(--color-text-main)', display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }}
+                style={{ background: 'var(--color-warning)', color: 'var(--color-text-main)', display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center', opacity: isBroadcasting ? 0.6 : 1 }}
               >
                 <AlertCircle size={20} />
-                LHA H-1 SLA
+                {isBroadcasting ? 'Memproses...' : 'LHA H-1 SLA'}
               </button>
               <button
+                type="button"
                 onClick={handleBroadcastReady}
+                disabled={isBroadcasting}
                 className="submit-btn"
-                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }}
+                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center', opacity: isBroadcasting ? 0.6 : 1 }}
               >
                 <CheckCircle size={20} />
-                Data Menunggu Dikonfirmasi
+                {isBroadcasting ? 'Memproses...' : 'Data Menunggu Dikonfirmasi'}
               </button>
             </div>
           </div>
