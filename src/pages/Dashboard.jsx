@@ -121,6 +121,28 @@ function Dashboard() {
     refreshUsersInBackground();
   };
 
+  // Salin pesan broadcast ke clipboard sebagai cadangan:
+  // kalau WhatsApp tidak terbuka (tidak ada aplikasi WA di perangkat),
+  // user tetap bisa paste manual ke WhatsApp.
+  const copyBroadcastToClipboard = async (text) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        return true;
+      } catch {
+        return false;
+      }
+    }
+  };
+
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
@@ -279,14 +301,17 @@ function Dashboard() {
       message += `\nLink Input: https://hitographic.github.io/AMOR/#/input\n\nMohon segera diproses :)\nTerima kasih`;
 
       const encodedMsg = encodeURIComponent(message);
-      const waUrl = `https://wa.me/?text=${encodedMsg}`;
+      const waUrl = `https://api.whatsapp.com/send?text=${encodedMsg}`;
       if (waWin) {
         waWin.location.href = waUrl;
       } else {
         // Cache-hit: tanpa await lama, masih dalam user-gesture → langsung buka.
+        // api.whatsapp.com dipakai (bukan wa.me) agar di laptop tanpa aplikasi
+        // WhatsApp tetap terbuka sebagai halaman web, bukan error whatsapp://.
         const opened = window.open(waUrl, '_blank');
         if (!opened) window.location.href = waUrl;
       }
+      copyBroadcastToClipboard(message);
       setIsBroadcastModalOpen(false);
 
     } catch (error) {
@@ -400,13 +425,14 @@ function Dashboard() {
       message += `Link Input: https://hitographic.github.io/AMOR/#/input\n\nMohon segera diproses :)\nTerima kasih`;
 
       const encodedMsg = encodeURIComponent(message);
-      const waUrl = `https://wa.me/?text=${encodedMsg}`;
+      const waUrl = `https://api.whatsapp.com/send?text=${encodedMsg}`;
       if (waWinReady) {
         waWinReady.location.href = waUrl;
       } else {
         const opened = window.open(waUrl, '_blank');
         if (!opened) window.location.href = waUrl;
       }
+      copyBroadcastToClipboard(message);
       setIsBroadcastModalOpen(false);
 
     } catch (error) {
