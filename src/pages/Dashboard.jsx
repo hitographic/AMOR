@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Plus, X, Loader2, FileText, Clock, Box, ClipboardList, AlertCircle, CheckCircle, CheckCircle2, Trash2, MessageCircle } from 'lucide-react';
 import { api } from '../services/api';
@@ -66,6 +66,60 @@ function Dashboard() {
   const [newItem, setNewItem] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Cache daftar users (nomor HP untuk cc) agar broadcast instan.
+  // api.getUsers() ke Google Apps Script bisa 10-60 detik (cold start),
+  // jadi kita preload sekali saat dashboard dibuka, bukan saat tombol diklik.
+  const usersCache = useRef([]);
+  const usersFetching = useRef(null);
+
+  const refreshUsersInBackground = () => {
+    if (usersFetching.current) return usersFetching.current;
+    usersFetching.current = api.getUsers()
+      .then((list) => {
+        if (Array.isArray(list) && list.length > 0) usersCache.current = list;
+        return usersCache.current;
+      })
+      .catch((e) => {
+        console.warn('preload getUsers gagal:', e);
+        return usersCache.current;
+      })
+      .finally(() => { usersFetching.current = null; });
+    return usersFetching.current;
+  };
+
+  // Ambil users: instan kalau cache ada, dibatasi timeout kalau harus fetch
+  // agar tidak menunggu 1 menit saat GAS lambat — lanjut tanpa cc.
+  const getUsersFast = async (timeoutMs = 8000) => {
+    if (usersCache.current.length > 0) return usersCache.current;
+    if (usersFetching.current) {
+      try {
+        return await Promise.race([
+          usersFetching.current,
+          new Promise((resolve) => setTimeout(() => resolve(usersCache.current), timeoutMs)),
+        ]);
+      } catch {
+        return usersCache.current;
+      }
+    }
+    try {
+      const result = await Promise.race([
+        api.getUsers(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('getUsers timeout')), timeoutMs)),
+      ]);
+      if (Array.isArray(result) && result.length > 0) usersCache.current = result;
+    } catch (e) {
+      console.warn('getUsers lambat/gagal, lanjut tanpa cc:', e);
+    }
+    return usersCache.current;
+  };
+
+  const openBroadcastModal = () => {
+    setIsBroadcastModalOpen(true);
+    // Segarkan cache selagi user memilih jenis broadcast,
+    // jadi saat tombol dalam modal diklik, data sudah siap.
+    refreshUsersInBackground();
+  };
+
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
@@ -74,6 +128,7 @@ function Dashboard() {
       setUserName(parsed.name || parsed.nik || 'Unknown');
     }
     fetchTransactions();
+    refreshUsersInBackground();
   }, []);
 
   const fetchTransactions = async () => {
@@ -121,12 +176,8 @@ function Dashboard() {
   };
 
   const handleBroadcastH1 = async () => {
-    // PENTING: buka tab baru secara sinkron di dalam user-gesture
-    // agar tidak diblokir popup-blocker browser (khususnya Chrome mobile).
-    // await api.getUsers() setelah ini akan memutus user-gesture,
-    // jadi window.open harus dipanggil duluan.
-    const waWin = window.open('', '_blank');
     setIsBroadcasting(true);
+    let waWin = null;
     try {
       const STAGE_SLA = {
         'LHA Reject to PPIC': { prev: 'Pembuatan LHA Reject', days: 2, role: 'qc' },
@@ -175,17 +226,19 @@ function Dashboard() {
       });
 
       if (warningTxs.length === 0) {
-        if (waWin) waWin.close();
         alert("Tidak ada LHA yang mendekati batas waktu (H-1 SLA).");
         return;
       }
 
-      // Fetch users to get their phone numbers (boleh gagal, tetap lanjut tanpa cc)
-      let usersList = [];
-      try {
-        usersList = await api.getUsers() || [];
-      } catch (e) {
-        console.warn('getUsers gagal, lanjut tanpa cc:', e);
+      // Jalur cepat: pakai cache preload (instan, tanpa menunggu jaringan).
+      // Hanya buka blank-tab + fetch kalau cache masih kosong.
+      let usersList = usersCache.current || [];
+      if (usersList.length === 0) {
+        // Buka sinkron dulu agar tidak diblokir popup-blocker selama fetch lama.
+        waWin = window.open('', '_blank');
+        usersList = await getUsersFast();
+      } else {
+        refreshUsersInBackground();
       }
 
       const grouped = {};
@@ -225,8 +278,9 @@ function Dashboard() {
       if (waWin) {
         waWin.location.href = waUrl;
       } else {
-        // Fallback kalau popup tetap diblokir: buka di tab yang sama
-        window.location.href = waUrl;
+        // Cache-hit: tanpa await lama, masih dalam user-gesture → langsung buka.
+        const opened = window.open(waUrl, '_blank');
+        if (!opened) window.location.href = waUrl;
       }
       setIsBroadcastModalOpen(false);
 
@@ -240,8 +294,8 @@ function Dashboard() {
   };
 
   const handleBroadcastReady = async () => {
-    const waWin = window.open('', '_blank');
     setIsBroadcasting(true);
+    let waWinReady = null;
     try {
       const STAGE_SLA = {
         'LHA Reject to PPIC': { prev: 'Pembuatan LHA Reject', days: 2, role: 'qc' },
@@ -282,16 +336,16 @@ function Dashboard() {
       });
 
       if (pendingQC.length === 0 && pendingPPIC.length === 0 && pendingAcct.length === 0 && pendingWH.length === 0) {
-        if (waWin) waWin.close();
         alert("Tidak ada LHA yang sedang menunggu konfirmasi lanjutan.");
         return;
       }
 
-      let usersList = [];
-      try {
-        usersList = await api.getUsers() || [];
-      } catch (e) {
-        console.warn('getUsers gagal, lanjut tanpa cc:', e);
+      let usersList = usersCache.current || [];
+      if (usersList.length === 0) {
+        waWinReady = window.open('', '_blank');
+        usersList = await getUsersFast();
+      } else {
+        refreshUsersInBackground();
       }
 
       const formatPhones = (role) => {
@@ -342,16 +396,17 @@ function Dashboard() {
 
       const encodedMsg = encodeURIComponent(message);
       const waUrl = `https://wa.me/?text=${encodedMsg}`;
-      if (waWin) {
-        waWin.location.href = waUrl;
+      if (waWinReady) {
+        waWinReady.location.href = waUrl;
       } else {
-        window.location.href = waUrl;
+        const opened = window.open(waUrl, '_blank');
+        if (!opened) window.location.href = waUrl;
       }
       setIsBroadcastModalOpen(false);
 
     } catch (error) {
       console.error(error);
-      if (waWin) waWin.close();
+      if (waWinReady) waWinReady.close();
       alert("Gagal memproses Broadcast WA.");
     } finally {
       setIsBroadcasting(false);
@@ -457,7 +512,7 @@ function Dashboard() {
           <p>Pantau semua proses retur</p>
         </div>
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-          <button className="add-lha-btn" onClick={() => setIsBroadcastModalOpen(true)} style={{ background: '#25D366' }} title="Kirim Notif via WhatsApp">
+          <button className="add-lha-btn" onClick={openBroadcastModal} style={{ background: '#25D366' }} title="Kirim Notif via WhatsApp">
             <MessageCircle size={20} />
             <span>Broadcast WA</span>
           </button>
